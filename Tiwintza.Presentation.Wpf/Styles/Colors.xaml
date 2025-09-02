@@ -1,0 +1,81 @@
+﻿<!-- Styles/Colors.xaml -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:System="clr-namespace:System;assembly=mscorlib">
+
+    <!-- === Colores base (del prototipo) === -->
+    <Color x:Key="Primary">#FF7A1E24</Color>
+    <!-- Burgundy -->
+    <Color x:Key="PrimaryDark">#FF5C1519</Color>
+    <Color x:Key="Gold">#FFC9A227</Color>
+    <Color x:Key="Cream">#FFF5E6C8</Color>
+    <Color x:Key="Laurel">#FF2E5939</Color>
+
+    <Color x:Key="Surface">#FFF8FAFC</Color>
+    <Color x:Key="SurfaceAlt">#FFFFFFFF</Color>
+    <Color x:Key="OnSurface">#FF1F2937</Color>
+    <Color x:Key="SecondaryText">#FF6B7280</Color>
+    <Color x:Key="GridBorder">#FFE5E7EB</Color>
+
+    <!-- Estados -->
+    <Color x:Key="Success">#FF2E7D32</Color>
+    <Color x:Key="Warning">#FFB78103</Color>
+    <Color x:Key="Error">#FFB3261E</Color>
+    <Color x:Key="Info">#FF0B5ED7</Color>
+
+    <!-- Sidebar / layout oscuro -->
+    <Color x:Key="Sidebar">#FF101827</Color>
+    <Color x:Key="SidebarDivider">#33000000</Color>
+    <Color x:Key="SidebarItemHover">#1FFFFFFF</Color>
+    <!-- blanco 12% -->
+    <Color x:Key="SidebarItemSelected">#26FFFFFF</Color>
+    <!-- blanco 15% -->
+
+    <!-- === Brushes alineados a los Color anteriores === -->
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}"/>
+    <SolidColorBrush x:Key="PrimaryDarkBrush" Color="{StaticResource PrimaryDark}"/>
+    <SolidColorBrush x:Key="GoldBrush" Color="{StaticResource Gold}"/>
+    <SolidColorBrush x:Key="CreamBrush" Color="{StaticResource Cream}"/>
+    <SolidColorBrush x:Key="LaurelBrush" Color="{StaticResource Laurel}"/>
+
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource Surface}"/>
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAlt}"/>
+    <SolidColorBrush x:Key="OnSurfaceBrush" Color="{StaticResource OnSurface}"/>
+    <SolidColorBrush x:Key="MutedBrush" Color="{StaticResource SecondaryText}"/>
+    <SolidColorBrush x:Key="GridBorderBrush" Color="{StaticResource GridBorder}"/>
+
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource Success}"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource Warning}"/>
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource Error}"/>
+    <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource Info}"/>
+
+    <SolidColorBrush x:Key="SidebarBrush" Color="{StaticResource Sidebar}"/>
+    <SolidColorBrush x:Key="SidebarDividerBrush" Color="{StaticResource SidebarDivider}"/>
+    <SolidColorBrush x:Key="SidebarItemHoverBrush" Color="{StaticResource SidebarItemHover}"/>
+    <SolidColorBrush x:Key="SidebarItemSelectedBrush" Color="{StaticResource SidebarItemSelected}"/>
+
+    <!-- Superficies -->
+    <SolidColorBrush x:Key="CardBrush" Color="{StaticResource SurfaceAlt}"/>
+
+    <!-- ===== Buttons helpers (nuevos) ===== -->
+    <!-- Suave “tint” del primario para hovers de botones outline/ghost -->
+    <SolidColorBrush x:Key="PrimarySoftBrush" Color="{StaticResource Primary}" Opacity="0.12"/>
+    <SolidColorBrush x:Key="PrimarySoftHoverBrush" Color="{StaticResource Primary}" Opacity="0.18"/>
+
+    <!-- Halo de enfoque accesible -->
+    <SolidColorBrush x:Key="FocusHaloBrush" Color="{StaticResource Primary}" Opacity="0.45"/>
+
+    <!-- Variantes oscuras para Danger/Success (hover) -->
+    <Color x:Key="ErrorDark">#FF8A1C14</Color>
+    <SolidColorBrush x:Key="ErrorDarkBrush" Color="{StaticResource ErrorDark}"/>
+
+    <Color x:Key="SuccessDark">#FF1B5E20</Color>
+    <SolidColorBrush x:Key="SuccessDarkBrush" Color="{StaticResource SuccessDark}"/>
+
+
+    <!-- Gradiente de fondo app -->
+    <LinearGradientBrush x:Key="AppGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{StaticResource Primary}" Offset="0"/>
+        <GradientStop Color="#FF0C2B5A" Offset="1"/>
+    </LinearGradientBrush>
+</ResourceDictionary>

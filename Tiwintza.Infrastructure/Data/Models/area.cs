@@ -6,38 +6,45 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Tiwintza.Infrastructure.Data.Models;
 
-[Index("nombre", "area_padre_id", Name = "uq_area", IsUnique = true)]
-public partial class area
+[Table("area")]
+[Index("Nombre", "AreaPadreId", Name = "uq_area", IsUnique = true)]
+public partial class Area
 {
     [Key]
-    public long id { get; set; }
+    [Column("id")]
+    public long Id { get; set; }
 
-    public string nombre { get; set; } = null!;
+    [Column("nombre")]
+    public string Nombre { get; set; } = null!;
 
-    public long? area_padre_id { get; set; }
+    [Column("area_padre_id")]
+    public long? AreaPadreId { get; set; }
 
-    [InverseProperty("area_padre")]
-    public virtual ICollection<area> Inversearea_padre { get; set; } = new List<area>();
+    [InverseProperty("Area")]
+    public virtual ICollection<Activo> Activo { get; set; } = new List<Activo>();
 
-    [InverseProperty("area")]
-    public virtual ICollection<activo> activo { get; set; } = new List<activo>();
+    [ForeignKey("AreaPadreId")]
+    [InverseProperty("InverseAreaPadre")]
+    public virtual Area? AreaPadre { get; set; }
 
-    [ForeignKey("area_padre_id")]
-    [InverseProperty("Inversearea_padre")]
-    public virtual area? area_padre { get; set; }
+    [InverseProperty("AreaIdDestinoNavigation")]
+    public virtual ICollection<Compra> Compra { get; set; } = new List<Compra>();
 
-    [InverseProperty("area_id_destinoNavigation")]
-    public virtual ICollection<compra> compra { get; set; } = new List<compra>();
+    [InverseProperty("Area")]
+    public virtual ICollection<ExistenciaAreaStock> ExistenciaAreaStock { get; set; } = new List<ExistenciaAreaStock>();
 
-    [InverseProperty("area")]
-    public virtual ICollection<existencia_area_stock> existencia_area_stock { get; set; } = new List<existencia_area_stock>();
+    [InverseProperty("AreaPadre")]
+    public virtual ICollection<Area> InverseAreaPadre { get; set; } = new List<Area>();
 
-    [InverseProperty("area")]
-    public virtual ICollection<salida> salida { get; set; } = new List<salida>();
+    [InverseProperty("Area")]
+    public virtual ICollection<Salida> Salida { get; set; } = new List<Salida>();
 
-    [InverseProperty("area_destino")]
-    public virtual ICollection<traslado_activo> traslado_activoarea_destino { get; set; } = new List<traslado_activo>();
+    [InverseProperty("AreaDestino")]
+    public virtual ICollection<TrasladoActivo> TrasladoActivoAreaDestino { get; set; } = new List<TrasladoActivo>();
 
-    [InverseProperty("area_origen")]
-    public virtual ICollection<traslado_activo> traslado_activoarea_origen { get; set; } = new List<traslado_activo>();
+    [InverseProperty("AreaOrigen")]
+    public virtual ICollection<TrasladoActivo> TrasladoActivoAreaOrigen { get; set; } = new List<TrasladoActivo>();
+
+    [InverseProperty("Area")]
+    public virtual ICollection<Usuario> Usuario { get; set; } = new List<Usuario>();
 }
