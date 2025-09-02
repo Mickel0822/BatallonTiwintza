@@ -3,10 +3,18 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
+using System.Windows.Diagnostics;
+using System.Windows.Markup;
 using Tiwintza.Infrastructure.Data;
+using Tiwintza.Infrastructure.Services;
+using Tiwintza.Infrastructure.Services.Auth;
 using Tiwintza.Presentation.Wpf.Services;
+using Tiwintza.Presentation.Wpf.Services.Windows;
 using Tiwintza.Presentation.Wpf.ViewModels;
+using Tiwintza.Presentation.Wpf.ViewModels.Activos;
 using Tiwintza.Presentation.Wpf.Views;
 
 namespace Tiwintza.Presentation.Wpf
@@ -20,37 +28,63 @@ namespace Tiwintza.Presentation.Wpf
             AppHost = Host.CreateDefaultBuilder()
                 .ConfigureAppConfiguration((ctx, cfg) =>
                 {
-                    cfg.SetBasePath(AppContext.BaseDirectory);
-                    cfg.AddJsonFile("appsettings.template.json", optional: true, reloadOnChange: true);
-                    cfg.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-                    #if DEBUG
-                    cfg.AddUserSecrets<App>();
-                    #endif
-                    cfg.AddEnvironmentVariables();
+                    cfg.SetBasePath(AppContext.BaseDirectory)
+                       .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                       .AddJsonFile("appsettings.template.json", optional: true, reloadOnChange: true)
+                        #if DEBUG
+                       .AddUserSecrets<App>(true)
+                        #endif
+                       .AddEnvironmentVariables();
                 })
                 .ConfigureServices((ctx, services) =>
                 {
-                    var cs = ctx.Configuration.GetConnectionString("MainDb");
-                    services.AddDbContext<AppDbContext>(opt => opt.UseNpgsql(cs));
+                    // DbContext desde configuración (UserSecrets/appsettings.json)
+                    services.AddDbContext<AppDbContext>(opt =>
+                        opt.UseNpgsql(ctx.Configuration.GetConnectionString("MainDb")));
 
-                    // Servicios
-                    services.AddSingleton<IAuthService, FakeAuthService>();
+                    // --- INICIO DE SERVICIOS DE INFRASTRUCTURE  ----
+                    // Auth real
+                    services.AddScoped<IAuthService, AuthService>();
+
+                    //List para los activos
+                    services.AddScoped<IActivosService, ActivosService>();
+
+                    //Crud para los activos
+                    services.AddScoped<IActivosCrudService, ActivosCrudService>();
+
+                    // Auth de desarrollo (simula login sin validar)
+
+                    // -- FIN DE SERVICIOS DE INFRASTRUCTURE  ----
+
+
+                    //Credential  storage
+                    services.AddSingleton<ICredentialStorage, WindowsCredentialStorage>();
+
 
                     // ViewModels
                     services.AddTransient<LoginViewModel>();
-                    services.AddTransient<AreasViewModel>();
+                    services.AddTransient<DashboardViewModel>();
+                    services.AddTransient<ActivosListViewModel>();
+                    services.AddSingleton<MainViewModel>(sp =>
+                        new MainViewModel(
+                            () => sp.GetRequiredService<DashboardViewModel>(),
+                            () => sp.GetRequiredService<ActivosListViewModel>()
+                        ));
 
-                    // Ventanas
+                    // Views
                     services.AddTransient<LoginWindow>();
-                    services.AddTransient<MainWindow>();
+                    services.AddSingleton<MainWindow>();
+
                 })
                 .Build();
         }
 
         protected override async void OnStartup(StartupEventArgs e)
         {
+            FrameworkElement.LanguageProperty.OverrideMetadata(
+                typeof(FrameworkElement),
+                new FrameworkPropertyMetadata(XmlLanguage.GetLanguage("es-EC")));
             await AppHost.StartAsync();
-            // Mostrar primero el Login
             var login = AppHost.Services.GetRequiredService<LoginWindow>();
             login.Show();
             base.OnStartup(e);

@@ -1,12 +1,14 @@
 ﻿<Application x:Class="Tiwintza.Presentation.Wpf.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:sys="clr-namespace:System;assembly=mscorlib">
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             >
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <!-- Tus estilos de colores/controles -->
                 <ResourceDictionary Source="Styles/Theme.xaml"/>
+                <ResourceDictionary Source="/Utilities/DataTemplate.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <!-- ÚNICA fuente para toda la app -->
@@ -27,6 +29,7 @@
                 <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
                 <Setter Property="FontSize"   Value="14"/>
             </Style>
+            
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -6,46 +6,58 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Tiwintza.Infrastructure.Data.Models;
 
-[Index("codigo", Name = "existencia_codigo_key", IsUnique = true)]
-[Index("nivel_critico", "nivel_minimo", "nivel_seguridad", "nivel_maximo", "stock_actual", Name = "idx_existencia_alertas")]
-[Index("nombre", Name = "idx_existencia_nombre")]
-public partial class existencia
+[Table("existencia")]
+[Index("Codigo", Name = "existencia_codigo_key", IsUnique = true)]
+[Index("NivelCritico", "NivelMinimo", "NivelSeguridad", "NivelMaximo", "StockActual", Name = "idx_existencia_alertas")]
+[Index("Nombre", Name = "idx_existencia_nombre")]
+public partial class Existencia
 {
     [Key]
-    public long id { get; set; }
+    [Column("id")]
+    public long Id { get; set; }
 
+    [Column("codigo")]
     [StringLength(50)]
-    public string codigo { get; set; } = null!;
+    public string Codigo { get; set; } = null!;
 
-    public string nombre { get; set; } = null!;
+    [Column("nombre")]
+    public string Nombre { get; set; } = null!;
 
-    public string? descripcion { get; set; }
+    [Column("descripcion")]
+    public string? Descripcion { get; set; }
 
+    [Column("unidad")]
     [StringLength(20)]
-    public string unidad { get; set; } = null!;
+    public string Unidad { get; set; } = null!;
 
-    public int nivel_maximo { get; set; }
+    [Column("nivel_maximo")]
+    public int NivelMaximo { get; set; }
 
-    public int nivel_seguridad { get; set; }
+    [Column("nivel_seguridad")]
+    public int NivelSeguridad { get; set; }
 
-    public int nivel_minimo { get; set; }
+    [Column("nivel_minimo")]
+    public int NivelMinimo { get; set; }
 
-    public int nivel_critico { get; set; }
+    [Column("nivel_critico")]
+    public int NivelCritico { get; set; }
 
-    public int stock_actual { get; set; }
+    [Column("stock_actual")]
+    public int StockActual { get; set; }
 
-    public long? proveedor_pref_id { get; set; }
+    [Column("proveedor_pref_id")]
+    public long? ProveedorPrefId { get; set; }
 
-    [InverseProperty("existencia")]
-    public virtual ICollection<detalle_compra> detalle_compra { get; set; } = new List<detalle_compra>();
+    [InverseProperty("Existencia")]
+    public virtual ICollection<DetalleCompra> DetalleCompra { get; set; } = new List<DetalleCompra>();
 
-    [InverseProperty("existencia")]
-    public virtual ICollection<existencia_area_stock> existencia_area_stock { get; set; } = new List<existencia_area_stock>();
+    [InverseProperty("Existencia")]
+    public virtual ICollection<ExistenciaAreaStock> ExistenciaAreaStock { get; set; } = new List<ExistenciaAreaStock>();
 
-    [ForeignKey("proveedor_pref_id")]
-    [InverseProperty("existencia")]
-    public virtual proveedor? proveedor_pref { get; set; }
+    [ForeignKey("ProveedorPrefId")]
+    [InverseProperty("Existencia")]
+    public virtual Proveedor? ProveedorPref { get; set; }
 
-    [InverseProperty("existencia")]
-    public virtual ICollection<salida> salida { get; set; } = new List<salida>();
+    [InverseProperty("Existencia")]
+    public virtual ICollection<Salida> Salida { get; set; } = new List<Salida>();
 }

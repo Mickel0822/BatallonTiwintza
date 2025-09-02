@@ -1,16 +1,107 @@
 ﻿<Window x:Class="Tiwintza.Presentation.Wpf.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Control de Activos - Tiwintza" Height="720" Width="1100">
-    <DockPanel>
-        <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="8">
-            <Button Content="Cargar Áreas" Command="{Binding AreasVM.CargarCommand}" Margin="0,0,8,0"/>
-        </StackPanel>
-        <DataGrid ItemsSource="{Binding AreasVM.Areas}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Margin="8">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Id" Binding="{Binding id}" Width="100"/>
-                <DataGridTextColumn Header="Área" Binding="{Binding nombre}" Width="*"/>
-            </DataGrid.Columns>
-        </DataGrid>
-    </DockPanel>
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        Title="Control de Activos - Tiwintza"
+        Height="720" Width="1180"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource AppGradient}"
+        UseLayoutRounding="True" 
+        SnapsToDevicePixels="True">
+
+    <Window.Resources>
+
+        <!-- Item de menú lateral -->
+        <Style x:Key="SideNavItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="TextElement.Foreground" Value="White"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="6"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="6"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="Accent" Grid.Column="0" Background="Transparent" CornerRadius="3,0,0,3"/>
+                            <Border x:Name="Bg" Grid.Column="1" CornerRadius="10" Background="Transparent" Padding="10">
+                                <ContentPresenter VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource SidebarItemHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Accent" Property="Background" Value="{DynamicResource GoldBrush}"/>
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource SidebarItemSelectedBrush}"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="TextElement.Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+
+            <Style.Resources>
+                <Style TargetType="TextBlock">
+                    <Setter Property="FontSize" Value="14"/>
+                </Style>
+                <Style TargetType="iconPacks:PackIconMaterial">
+                    <Setter Property="Width" Value="18"/>
+                    <Setter Property="Height" Value="18"/>
+                    <Setter Property="VerticalAlignment" Value="Center"/>
+                </Style>
+            </Style.Resources>
+        </Style>
+
+        <DataTemplate x:Key="SideNavItemTemplate">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <iconPacks:PackIconMaterial Kind="{Binding IconKind}"/>
+                <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="10,0,0,0" VerticalAlignment="Center"/>
+            </Grid>
+        </DataTemplate>
+    </Window.Resources>
+
+    <!-- Layout -->
+    <Grid Margin="18">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260"/>
+            <ColumnDefinition Width="12"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Grid.Column="0" CornerRadius="16" Background="{StaticResource SidebarBrush}" Padding="16">
+            <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Top">
+                    <TextBlock Text="Batallón Tiwintza" Foreground="White" FontWeight="SemiBold" FontSize="18" Margin="4,0,0,12"/>
+                    <Separator Margin="0,0,0,8" Background="{StaticResource SidebarDividerBrush}"/>
+                </StackPanel>
+
+                <ListBox ItemsSource="{Binding Menu}"
+                 SelectedItem="{Binding SelectedMenu, Mode=TwoWay}"
+                 ItemContainerStyle="{StaticResource SideNavItemStyle}"
+                 ItemTemplate="{StaticResource SideNavItemTemplate}"
+                 BorderThickness="0"
+                 Background="Transparent"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+            </DockPanel>
+        </Border>
+
+        
+
+        <!-- Contenido -->
+        <Border Grid.Column="2" CornerRadius="16" Background="{StaticResource  CreamBrush}" Padding="0">
+            <ContentControl Content="{Binding Current}"/>
+        </Border>
+    </Grid>
 </Window>

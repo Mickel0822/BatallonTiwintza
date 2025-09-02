@@ -1,0 +1,254 @@
+﻿<UserControl x:Class="Tiwintza.Presentation.Wpf.Views.Activos.ActivosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:helpers="clr-namespace:Tiwintza.Presentation.Wpf.Helpers"
+             xmlns:views="clr-namespace:Tiwintza.Presentation.Wpf.Views.Activos"
+             xmlns:vm="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Activos"
+             mc:Ignorable="d"
+             d:DesignHeight="800" d:DesignWidth="1200"
+             Loaded="OnLoaded">
+
+    <!-- Renderiza el formulario cuando el Content sea ActivoFormViewModel -->
+    <UserControl.Resources>
+        <DataTemplate DataType="{x:Type vm:ActivoFormViewModel}">
+            <views:ActivoFormView/>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid>
+
+        <!-- ================= LISTADO ================= -->
+        <Grid x:Name="ListadoRoot">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsInForm}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+
+            <Grid Margin="18">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Título + Acciones -->
+                <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,12">
+                    <TextBlock Text="Activos" Style="{StaticResource H1}" DockPanel.Dock="Left"/>
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                        <Button Style="{StaticResource OutlineButton.Small}" Command="{Binding ExportarExcelAsyncCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="FileExcelOutline" Width="16" Height="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="Excel"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource OutlineButton.Small}" Command="{Binding ExportarPdfAsyncCommand}" Margin="8,0,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="FilePdfBox" Width="16" Height="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="PDF"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding NuevoAsyncCommand}" Margin="8,0,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="Plus" Width="16" Height="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="Nuevo"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- Filtros -->
+                <Grid Grid.Row="1" Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Buscador -->
+                    <TextBox Grid.Column="0"
+                             Style="{StaticResource InputTextBox}"
+                             Tag="Buscar código o nombre"
+                             Text="{Binding Texto, UpdateSourceTrigger=PropertyChanged}"/>
+
+                    <!-- ÁREA -->
+                    <ComboBox Grid.Column="1"
+                              Style="{StaticResource InputComboBox}"
+                              MinWidth="170"
+                              DisplayMemberPath="Nombre"
+                              SelectedValuePath="Id"
+                              SelectedValue="{Binding AreaId, Mode=TwoWay, Converter={StaticResource ZeroToNullLong}}"
+                              Tag="Seleccione un área">
+                        <ComboBox.Resources>
+                            <CollectionViewSource x:Key="AreasView" Source="{Binding Areas}"/>
+                        </ComboBox.Resources>
+                        <ComboBox.ItemsSource>
+                            <CompositeCollection>
+                                <x:Static Member="helpers:UiSentinels.Ninguno"/>
+                                <CollectionContainer Collection="{Binding Source={StaticResource AreasView}}"/>
+                            </CompositeCollection>
+                        </ComboBox.ItemsSource>
+                    </ComboBox>
+
+                    <!-- ESTADO -->
+                    <ComboBox Grid.Column="2"
+                              Style="{StaticResource InputComboBox}"
+                              MinWidth="170"
+                              Tag="Seleccione un estado"
+                              DisplayMemberPath="Nombre"
+                              SelectedValuePath="Id"
+                              SelectedValue="{Binding EstadoId, Mode=TwoWay, Converter={StaticResource ZeroToNullLong}}">
+                        <ComboBox.Resources>
+                            <CollectionViewSource x:Key="EstadosView" Source="{Binding Estados}"/>
+                        </ComboBox.Resources>
+                        <ComboBox.ItemsSource>
+                            <CompositeCollection>
+                                <x:Static Member="helpers:UiSentinels.Ninguno"/>
+                                <CollectionContainer Collection="{Binding Source={StaticResource EstadosView}}"/>
+                            </CompositeCollection>
+                        </ComboBox.ItemsSource>
+                    </ComboBox>
+
+                    <!-- TIPO -->
+                    <ComboBox Grid.Column="3"
+                              Style="{StaticResource InputComboBox}"
+                              MinWidth="170"
+                              Tag="Seleccione un tipo"
+                              DisplayMemberPath="Nombre"
+                              SelectedValuePath="Id"
+                              SelectedValue="{Binding TipoId, Mode=TwoWay, Converter={StaticResource ZeroToNullLong}}">
+                        <ComboBox.Resources>
+                            <CollectionViewSource x:Key="TiposView" Source="{Binding Tipos}"/>
+                        </ComboBox.Resources>
+                        <ComboBox.ItemsSource>
+                            <CompositeCollection>
+                                <x:Static Member="helpers:UiSentinels.Ninguno"/>
+                                <CollectionContainer Collection="{Binding Source={StaticResource TiposView}}"/>
+                            </CompositeCollection>
+                        </ComboBox.ItemsSource>
+                    </ComboBox>
+
+                    <!-- Aplicar -->
+                    <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <CheckBox Style="{StaticResource SwitchToggle}"
+                                  Content="Incluir baja"
+                                  IsChecked="{Binding IncluirBaja}"
+                                  VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding AplicarCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="Magnify" Width="16" Height="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="Aplicar"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <!-- KPIs -->
+                <UniformGrid Grid.Row="2" Rows="1" Columns="3" Margin="0,0,0,12">
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Total" Style="{StaticResource Caption}"/>
+                            <TextBlock Text="{Binding Total}" Style="{StaticResource H1}"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Operativos" Style="{StaticResource Caption}"/>
+                            <TextBlock Text="{Binding TotalOperativos}" Style="{StaticResource H1}"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="En baja" Style="{StaticResource Caption}"/>
+                            <TextBlock Text="{Binding TotalBaja}" Style="{StaticResource H1}"/>
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
+
+                <!-- Tabla -->
+                <DataGrid Grid.Row="3"
+                          Style="{StaticResource GridTable2025}"
+                          ItemsSource="{Binding Items}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="160"/>
+                        <DataGridTextColumn Header="Descripción" Binding="{Binding Nombre}" Width="*"/>
+                        <DataGridTextColumn Header="Área" Binding="{Binding Area}" Width="220"/>
+                        <DataGridTextColumn Header="Tipo" Binding="{Binding Tipo}" Width="180"/>
+                        <DataGridTemplateColumn Header="Estado" Width="160">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource Badge2025}"
+                                            Background="{Binding EstadoUi, Converter={StaticResource EstadoToBrush}}">
+                                        <TextBlock Text="{Binding EstadoUi}" Foreground="White" FontSize="12"/>
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Valor" Binding="{Binding Valor, StringFormat={}{0:C}}" Width="130"/>
+                        <DataGridTextColumn Header="Compra" Width="120">
+                            <DataGridTextColumn.Binding>
+                                <Binding Path="FechaCompra" Converter="{StaticResource DateOnlyToString}"/>
+                            </DataGridTextColumn.Binding>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- Paginación -->
+                <DockPanel Grid.Row="4" Margin="0,12,0,0" LastChildFill="False">
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                        <Button Style="{StaticResource OutlineButton.Small}"
+                                Command="{Binding PagAnteriorCommand}"
+                                IsEnabled="{Binding HasPrev}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="ChevronLeft" Width="16" Height="16" Margin="0,0,6,0"/>
+                                <TextBlock Text="Anterior"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Border Background="{DynamicResource CreamBrush}" CornerRadius="8" Padding="10,8" Margin="8,0,8,0">
+                            <TextBlock Text="{Binding Page}" Foreground="{DynamicResource PrimaryBrush}" FontWeight="SemiBold"/>
+                        </Border>
+
+                        <Button Style="{StaticResource OutlineButton.Small}"
+                                Command="{Binding PagSiguienteCommand}"
+                                IsEnabled="{Binding HasNext}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Siguiente" Margin="0,0,6,0"/>
+                                <iconPacks:PackIconMaterial Kind="ChevronRight" Width="16"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </DockPanel>
+            </Grid>
+        </Grid>
+
+        <!-- ================= FORMULARIO ================= -->
+        <ContentControl Content="{Binding FormVm}">
+            <ContentControl.Style>
+                <Style TargetType="ContentControl">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsInForm}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ContentControl.Style>
+        </ContentControl>
+    </Grid>
+</UserControl>

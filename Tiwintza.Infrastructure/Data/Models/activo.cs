@@ -6,81 +6,103 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Tiwintza.Infrastructure.Data.Models;
 
-[Index("codigo_inventario", Name = "activo_codigo_inventario_key", IsUnique = true)]
-[Index("area_id", Name = "idx_activo_area")]
-[Index("estado_id", Name = "idx_activo_estado")]
-[Index("tipo_id", Name = "idx_activo_tipo")]
-public partial class activo
+[Table("activo")]
+[Index("CodigoInventario", Name = "activo_codigo_inventario_key", IsUnique = true)]
+[Index("AreaId", Name = "idx_activo_area")]
+[Index("EstadoId", Name = "idx_activo_estado")]
+[Index("TipoId", Name = "idx_activo_tipo")]
+public partial class Activo
 {
     [Key]
-    public long id { get; set; }
+    [Column("id")]
+    public long Id { get; set; }
 
+    [Column("codigo_inventario")]
     [StringLength(50)]
-    public string codigo_inventario { get; set; } = null!;
+    public string CodigoInventario { get; set; } = null!;
 
-    public string nombre { get; set; } = null!;
+    [Column("nombre")]
+    public string Nombre { get; set; } = null!;
 
-    public long tipo_id { get; set; }
+    [Column("tipo_id")]
+    public long TipoId { get; set; }
 
-    public string? descripcion { get; set; }
+    [Column("descripcion")]
+    public string? Descripcion { get; set; }
 
-    public string? marca { get; set; }
+    [Column("marca")]
+    public string? Marca { get; set; }
 
-    public string? modelo { get; set; }
+    [Column("modelo")]
+    public string? Modelo { get; set; }
 
-    public string? serie { get; set; }
+    [Column("serie")]
+    public string? Serie { get; set; }
 
-    public string? material { get; set; }
+    [Column("material")]
+    public string? Material { get; set; }
 
-    public long estado_id { get; set; }
+    [Column("estado_id")]
+    public long EstadoId { get; set; }
 
-    public long area_id { get; set; }
+    [Column("area_id")]
+    public long AreaId { get; set; }
 
+    [Column("valor_unitario")]
     [Precision(12, 2)]
-    public decimal valor_unitario { get; set; }
+    public decimal ValorUnitario { get; set; }
 
-    public DateOnly? fecha_compra { get; set; }
+    [Column("fecha_compra")]
+    public DateOnly? FechaCompra { get; set; }
 
-    public long? proveedor_id { get; set; }
+    [Column("proveedor_id")]
+    public long? ProveedorId { get; set; }
 
-    public long? compra_id { get; set; }
+    [Column("compra_id")]
+    public long? CompraId { get; set; }
 
-    public int? vida_util_meses { get; set; }
+    [Column("vida_util_meses")]
+    public int? VidaUtilMeses { get; set; }
 
+    [Column("depreciacion_mensual")]
     [Precision(12, 2)]
-    public decimal? depreciacion_mensual { get; set; }
+    public decimal? DepreciacionMensual { get; set; }
 
-    public int? garantia_meses { get; set; }
+    [Column("garantia_meses")]
+    public int? GarantiaMeses { get; set; }
 
-    public string? foto_url { get; set; }
+    [Column("foto_url")]
+    public string? FotoUrl { get; set; }
 
-    public string? observaciones { get; set; }
+    [Column("observaciones")]
+    public string? Observaciones { get; set; }
 
-    public DateTime creado_en { get; set; }
+    [Column("creado_en")]
+    public DateTime CreadoEn { get; set; }
 
-    [ForeignKey("area_id")]
-    [InverseProperty("activo")]
-    public virtual area area { get; set; } = null!;
+    [ForeignKey("AreaId")]
+    [InverseProperty("Activo")]
+    public virtual Area Area { get; set; } = null!;
 
-    [InverseProperty("activo")]
-    public virtual ICollection<baja_activo> baja_activo { get; set; } = new List<baja_activo>();
+    [InverseProperty("Activo")]
+    public virtual ICollection<BajaActivo> BajaActivo { get; set; } = new List<BajaActivo>();
 
-    [ForeignKey("compra_id")]
-    [InverseProperty("activo")]
-    public virtual compra? compra { get; set; }
+    [ForeignKey("CompraId")]
+    [InverseProperty("Activo")]
+    public virtual Compra? Compra { get; set; }
 
-    [ForeignKey("estado_id")]
-    [InverseProperty("activo")]
-    public virtual estado estado { get; set; } = null!;
+    [ForeignKey("EstadoId")]
+    [InverseProperty("Activo")]
+    public virtual Estado Estado { get; set; } = null!;
 
-    [ForeignKey("proveedor_id")]
-    [InverseProperty("activo")]
-    public virtual proveedor? proveedor { get; set; }
+    [ForeignKey("ProveedorId")]
+    [InverseProperty("Activo")]
+    public virtual Proveedor? Proveedor { get; set; }
 
-    [ForeignKey("tipo_id")]
-    [InverseProperty("activo")]
-    public virtual tipo_bien tipo { get; set; } = null!;
+    [ForeignKey("TipoId")]
+    [InverseProperty("Activo")]
+    public virtual TipoBien Tipo { get; set; } = null!;
 
-    [InverseProperty("activo")]
-    public virtual ICollection<traslado_activo> traslado_activo { get; set; } = new List<traslado_activo>();
+    [InverseProperty("Activo")]
+    public virtual ICollection<TrasladoActivo> TrasladoActivo { get; set; } = new List<TrasladoActivo>();
 }

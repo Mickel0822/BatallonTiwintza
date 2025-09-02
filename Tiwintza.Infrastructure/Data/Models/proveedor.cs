@@ -6,29 +6,36 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Tiwintza.Infrastructure.Data.Models;
 
-[Index("ruc", Name = "proveedor_ruc_key", IsUnique = true)]
-public partial class proveedor
+[Table("proveedor")]
+[Index("Ruc", Name = "proveedor_ruc_key", IsUnique = true)]
+public partial class Proveedor
 {
     [Key]
-    public long id { get; set; }
+    [Column("id")]
+    public long Id { get; set; }
 
+    [Column("ruc")]
     [StringLength(13)]
-    public string ruc { get; set; } = null!;
+    public string Ruc { get; set; } = null!;
 
-    public string razon_social { get; set; } = null!;
+    [Column("razon_social")]
+    public string RazonSocial { get; set; } = null!;
 
-    public string? contacto { get; set; }
+    [Column("contacto")]
+    public string? Contacto { get; set; }
 
-    public string? telefono { get; set; }
+    [Column("telefono")]
+    public string? Telefono { get; set; }
 
-    public string? email { get; set; }
+    [Column("email")]
+    public string? Email { get; set; }
 
-    [InverseProperty("proveedor")]
-    public virtual ICollection<activo> activo { get; set; } = new List<activo>();
+    [InverseProperty("Proveedor")]
+    public virtual ICollection<Activo> Activo { get; set; } = new List<Activo>();
 
-    [InverseProperty("proveedor")]
-    public virtual ICollection<compra> compra { get; set; } = new List<compra>();
+    [InverseProperty("Proveedor")]
+    public virtual ICollection<Compra> Compra { get; set; } = new List<Compra>();
 
-    [InverseProperty("proveedor_pref")]
-    public virtual ICollection<existencia> existencia { get; set; } = new List<existencia>();
+    [InverseProperty("ProveedorPref")]
+    public virtual ICollection<Existencia> Existencia { get; set; } = new List<Existencia>();
 }

@@ -6,32 +6,41 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Tiwintza.Infrastructure.Data.Models;
 
-[Index("area_id", Name = "idx_salida_area")]
-[Index("existencia_id", Name = "idx_salida_exi")]
-public partial class salida
+[Table("salida")]
+[Index("AreaId", Name = "idx_salida_area")]
+[Index("ExistenciaId", Name = "idx_salida_exi")]
+public partial class Salida
 {
     [Key]
-    public long id { get; set; }
+    [Column("id")]
+    public long Id { get; set; }
 
-    public DateOnly fecha { get; set; }
+    [Column("fecha")]
+    public DateOnly Fecha { get; set; }
 
-    public long existencia_id { get; set; }
+    [Column("existencia_id")]
+    public long ExistenciaId { get; set; }
 
-    public int cantidad { get; set; }
+    [Column("cantidad")]
+    public int Cantidad { get; set; }
 
-    public long area_id { get; set; }
+    [Column("area_id")]
+    public long AreaId { get; set; }
 
-    public string? responsable { get; set; }
+    [Column("responsable")]
+    public string? Responsable { get; set; }
 
-    public string? observacion { get; set; }
+    [Column("observacion")]
+    public string? Observacion { get; set; }
 
-    public DateTime creado_en { get; set; }
+    [Column("creado_en")]
+    public DateTime CreadoEn { get; set; }
 
-    [ForeignKey("area_id")]
-    [InverseProperty("salida")]
-    public virtual area area { get; set; } = null!;
+    [ForeignKey("AreaId")]
+    [InverseProperty("Salida")]
+    public virtual Area Area { get; set; } = null!;
 
-    [ForeignKey("existencia_id")]
-    [InverseProperty("salida")]
-    public virtual existencia existencia { get; set; } = null!;
+    [ForeignKey("ExistenciaId")]
+    [InverseProperty("Salida")]
+    public virtual Existencia Existencia { get; set; } = null!;
 }

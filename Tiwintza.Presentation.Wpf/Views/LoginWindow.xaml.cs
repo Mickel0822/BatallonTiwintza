@@ -1,6 +1,6 @@
-﻿using System.Windows;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System.Windows;
 using Tiwintza.Presentation.Wpf.ViewModels;
-using Microsoft.Extensions.DependencyInjection; 
 
 namespace Tiwintza.Presentation.Wpf.Views
 {
@@ -13,12 +13,13 @@ namespace Tiwintza.Presentation.Wpf.Views
             InitializeComponent();
             DataContext = vm;
 
-            // Cuando el login sea OK, abrimos MainWindow y cerramos Login
+            Loaded += async (_, __) => await vm.InitAsync();
+
             vm.LoginExitoso += () =>
             {
                 var main = App.AppHost.Services.GetRequiredService<MainWindow>();
                 main.Show();
-                this.Close();
+                Close();
             };
         }
 
@@ -29,3 +30,4 @@ namespace Tiwintza.Presentation.Wpf.Views
         }
     }
 }
+
