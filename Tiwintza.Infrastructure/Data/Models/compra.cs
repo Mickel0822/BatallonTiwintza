@@ -6,37 +6,45 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Tiwintza.Infrastructure.Data.Models;
 
-[Index("proveedor_id", "num_factura", Name = "uq_compra_factura", IsUnique = true)]
-public partial class compra
+[Table("compra")]
+[Index("ProveedorId", "NumFactura", Name = "uq_compra_factura", IsUnique = true)]
+public partial class Compra
 {
     [Key]
-    public long id { get; set; }
+    [Column("id")]
+    public long Id { get; set; }
 
-    public DateOnly fecha { get; set; }
+    [Column("fecha")]
+    public DateOnly Fecha { get; set; }
 
-    public long proveedor_id { get; set; }
+    [Column("proveedor_id")]
+    public long ProveedorId { get; set; }
 
+    [Column("num_factura")]
     [StringLength(40)]
-    public string? num_factura { get; set; }
+    public string? NumFactura { get; set; }
 
+    [Column("total")]
     [Precision(14, 2)]
-    public decimal? total { get; set; }
+    public decimal? Total { get; set; }
 
-    public long? area_id_destino { get; set; }
+    [Column("area_id_destino")]
+    public long? AreaIdDestino { get; set; }
 
-    public DateTime creado_en { get; set; }
+    [Column("creado_en")]
+    public DateTime CreadoEn { get; set; }
 
-    [InverseProperty("compra")]
-    public virtual ICollection<activo> activo { get; set; } = new List<activo>();
+    [InverseProperty("Compra")]
+    public virtual ICollection<Activo> Activo { get; set; } = new List<Activo>();
 
-    [ForeignKey("area_id_destino")]
-    [InverseProperty("compra")]
-    public virtual area? area_id_destinoNavigation { get; set; }
+    [ForeignKey("AreaIdDestino")]
+    [InverseProperty("Compra")]
+    public virtual Area? AreaIdDestinoNavigation { get; set; }
 
-    [InverseProperty("compra")]
-    public virtual ICollection<detalle_compra> detalle_compra { get; set; } = new List<detalle_compra>();
+    [InverseProperty("Compra")]
+    public virtual ICollection<DetalleCompra> DetalleCompra { get; set; } = new List<DetalleCompra>();
 
-    [ForeignKey("proveedor_id")]
-    [InverseProperty("compra")]
-    public virtual proveedor proveedor { get; set; } = null!;
+    [ForeignKey("ProveedorId")]
+    [InverseProperty("Compra")]
+    public virtual Proveedor Proveedor { get; set; } = null!;
 }

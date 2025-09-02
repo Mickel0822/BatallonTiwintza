@@ -7,214 +7,277 @@ namespace Tiwintza.Infrastructure.Data;
 
 public partial class AppDbContext : DbContext
 {
+    public AppDbContext()
+    {
+    }
+
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
     {
     }
 
-    public virtual DbSet<activo> activo { get; set; }
+    public virtual DbSet<Activo> Activo { get; set; }
 
-    public virtual DbSet<area> area { get; set; }
+    public virtual DbSet<Area> Area { get; set; }
 
-    public virtual DbSet<auditoria> auditoria { get; set; }
+    public virtual DbSet<Auditoria> Auditoria { get; set; }
 
-    public virtual DbSet<baja_activo> baja_activo { get; set; }
+    public virtual DbSet<BajaActivo> BajaActivo { get; set; }
 
-    public virtual DbSet<compra> compra { get; set; }
+    public virtual DbSet<Compra> Compra { get; set; }
 
-    public virtual DbSet<detalle_compra> detalle_compra { get; set; }
+    public virtual DbSet<DetalleCompra> DetalleCompra { get; set; }
 
-    public virtual DbSet<estado> estado { get; set; }
+    public virtual DbSet<Estado> Estado { get; set; }
 
-    public virtual DbSet<existencia> existencia { get; set; }
+    public virtual DbSet<Existencia> Existencia { get; set; }
 
-    public virtual DbSet<existencia_area_stock> existencia_area_stock { get; set; }
+    public virtual DbSet<ExistenciaAreaStock> ExistenciaAreaStock { get; set; }
 
-    public virtual DbSet<proveedor> proveedor { get; set; }
+    public virtual DbSet<LoginAuditoria> LoginAuditoria { get; set; }
 
-    public virtual DbSet<salida> salida { get; set; }
+    public virtual DbSet<Proveedor> Proveedor { get; set; }
 
-    public virtual DbSet<tipo_bien> tipo_bien { get; set; }
+    public virtual DbSet<Rol> Rol { get; set; }
 
-    public virtual DbSet<traslado_activo> traslado_activo { get; set; }
+    public virtual DbSet<Salida> Salida { get; set; }
 
-    public virtual DbSet<v_existencias_niveles> v_existencias_niveles { get; set; }
+    public virtual DbSet<TipoBien> TipoBien { get; set; }
 
-    public virtual DbSet<v_existencias_por_area> v_existencias_por_area { get; set; }
+    public virtual DbSet<TrasladoActivo> TrasladoActivo { get; set; }
 
-    public virtual DbSet<v_movimientos_existencia> v_movimientos_existencia { get; set; }
+    public virtual DbSet<Usuario> Usuario { get; set; }
+
+    public virtual DbSet<VExistenciasNiveles> VExistenciasNiveles { get; set; }
+
+    public virtual DbSet<VExistenciasPorArea> VExistenciasPorArea { get; set; }
+
+    public virtual DbSet<VMovimientosExistencia> VMovimientosExistencia { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=batallon_tiwintza;Username=appuser;Password=Usuario12345");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasPostgresExtension("pgcrypto");
 
-        modelBuilder.Entity<activo>(entity =>
+        modelBuilder.Entity<Activo>(entity =>
         {
-            entity.HasKey(e => e.id).HasName("activo_pkey");
+            entity.HasKey(e => e.Id).HasName("activo_pkey");
 
-            entity.Property(e => e.creado_en).HasDefaultValueSql("now()");
+            entity.Property(e => e.CreadoEn).HasDefaultValueSql("now()");
 
-            entity.HasOne(d => d.area).WithMany(p => p.activo)
+            entity.HasOne(d => d.Area).WithMany(p => p.Activo)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("activo_area_id_fkey");
 
-            entity.HasOne(d => d.compra).WithMany(p => p.activo)
+            entity.HasOne(d => d.Compra).WithMany(p => p.Activo)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("activo_compra_id_fkey");
 
-            entity.HasOne(d => d.estado).WithMany(p => p.activo)
+            entity.HasOne(d => d.Estado).WithMany(p => p.Activo)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("activo_estado_id_fkey");
 
-            entity.HasOne(d => d.proveedor).WithMany(p => p.activo)
+            entity.HasOne(d => d.Proveedor).WithMany(p => p.Activo)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("activo_proveedor_id_fkey");
 
-            entity.HasOne(d => d.tipo).WithMany(p => p.activo)
+            entity.HasOne(d => d.Tipo).WithMany(p => p.Activo)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("activo_tipo_id_fkey");
         });
 
-        modelBuilder.Entity<area>(entity =>
+        modelBuilder.Entity<Area>(entity =>
         {
-            entity.HasKey(e => e.id).HasName("area_pkey");
+            entity.HasKey(e => e.Id).HasName("area_pkey");
 
-            entity.HasOne(d => d.area_padre).WithMany(p => p.Inversearea_padre)
+            entity.HasOne(d => d.AreaPadre).WithMany(p => p.InverseAreaPadre)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("area_area_padre_id_fkey");
         });
 
-        modelBuilder.Entity<auditoria>(entity =>
+        modelBuilder.Entity<Auditoria>(entity =>
         {
-            entity.HasKey(e => e.id).HasName("auditoria_pkey");
+            entity.HasKey(e => e.Id).HasName("auditoria_pkey");
 
-            entity.Property(e => e.fecha_hora).HasDefaultValueSql("now()");
+            entity.Property(e => e.FechaHora).HasDefaultValueSql("now()");
         });
 
-        modelBuilder.Entity<baja_activo>(entity =>
+        modelBuilder.Entity<BajaActivo>(entity =>
         {
-            entity.HasKey(e => e.id).HasName("baja_activo_pkey");
+            entity.HasKey(e => e.Id).HasName("baja_activo_pkey");
 
-            entity.Property(e => e.creado_en).HasDefaultValueSql("now()");
-            entity.Property(e => e.fecha_baja).HasDefaultValueSql("CURRENT_DATE");
+            entity.Property(e => e.CreadoEn).HasDefaultValueSql("now()");
+            entity.Property(e => e.FechaBaja).HasDefaultValueSql("CURRENT_DATE");
 
-            entity.HasOne(d => d.activo).WithMany(p => p.baja_activo)
+            entity.HasOne(d => d.Activo).WithMany(p => p.BajaActivo)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("baja_activo_activo_id_fkey");
         });
 
-        modelBuilder.Entity<compra>(entity =>
+        modelBuilder.Entity<Compra>(entity =>
         {
-            entity.HasKey(e => e.id).HasName("compra_pkey");
+            entity.HasKey(e => e.Id).HasName("compra_pkey");
 
-            entity.Property(e => e.creado_en).HasDefaultValueSql("now()");
+            entity.Property(e => e.CreadoEn).HasDefaultValueSql("now()");
 
-            entity.HasOne(d => d.area_id_destinoNavigation).WithMany(p => p.compra)
+            entity.HasOne(d => d.AreaIdDestinoNavigation).WithMany(p => p.Compra)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("compra_area_id_destino_fkey");
 
-            entity.HasOne(d => d.proveedor).WithMany(p => p.compra)
+            entity.HasOne(d => d.Proveedor).WithMany(p => p.Compra)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("compra_proveedor_id_fkey");
         });
 
-        modelBuilder.Entity<detalle_compra>(entity =>
+        modelBuilder.Entity<DetalleCompra>(entity =>
         {
-            entity.HasKey(e => e.id).HasName("detalle_compra_pkey");
+            entity.HasKey(e => e.Id).HasName("detalle_compra_pkey");
 
-            entity.Property(e => e.creado_en).HasDefaultValueSql("now()");
+            entity.Property(e => e.CreadoEn).HasDefaultValueSql("now()");
 
-            entity.HasOne(d => d.compra).WithMany(p => p.detalle_compra).HasConstraintName("detalle_compra_compra_id_fkey");
+            entity.HasOne(d => d.Compra).WithMany(p => p.DetalleCompra).HasConstraintName("detalle_compra_compra_id_fkey");
 
-            entity.HasOne(d => d.existencia).WithMany(p => p.detalle_compra)
+            entity.HasOne(d => d.Existencia).WithMany(p => p.DetalleCompra)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("fk_detcomp_exi");
         });
 
-        modelBuilder.Entity<estado>(entity =>
+        modelBuilder.Entity<Estado>(entity =>
         {
-            entity.HasKey(e => e.id).HasName("estado_pkey");
+            entity.HasKey(e => e.Id).HasName("estado_pkey");
 
-            entity.Property(e => e.es_baja).HasDefaultValue(false);
-            entity.Property(e => e.es_operativo).HasDefaultValue(true);
+            entity.Property(e => e.EsBaja).HasDefaultValue(false);
+            entity.Property(e => e.EsOperativo).HasDefaultValue(true);
         });
 
-        modelBuilder.Entity<existencia>(entity =>
+        modelBuilder.Entity<Existencia>(entity =>
         {
-            entity.HasKey(e => e.id).HasName("existencia_pkey");
+            entity.HasKey(e => e.Id).HasName("existencia_pkey");
 
-            entity.Property(e => e.stock_actual).HasDefaultValue(0);
+            entity.Property(e => e.StockActual).HasDefaultValue(0);
 
-            entity.HasOne(d => d.proveedor_pref).WithMany(p => p.existencia)
+            entity.HasOne(d => d.ProveedorPref).WithMany(p => p.Existencia)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("existencia_proveedor_pref_id_fkey");
         });
 
-        modelBuilder.Entity<existencia_area_stock>(entity =>
+        modelBuilder.Entity<ExistenciaAreaStock>(entity =>
         {
-            entity.HasKey(e => e.id).HasName("existencia_area_stock_pkey");
+            entity.HasKey(e => e.Id).HasName("existencia_area_stock_pkey");
 
-            entity.Property(e => e.stock_area).HasDefaultValue(0);
+            entity.Property(e => e.StockArea).HasDefaultValue(0);
 
-            entity.HasOne(d => d.area).WithMany(p => p.existencia_area_stock).HasConstraintName("existencia_area_stock_area_id_fkey");
+            entity.HasOne(d => d.Area).WithMany(p => p.ExistenciaAreaStock).HasConstraintName("existencia_area_stock_area_id_fkey");
 
-            entity.HasOne(d => d.existencia).WithMany(p => p.existencia_area_stock).HasConstraintName("existencia_area_stock_existencia_id_fkey");
+            entity.HasOne(d => d.Existencia).WithMany(p => p.ExistenciaAreaStock).HasConstraintName("existencia_area_stock_existencia_id_fkey");
         });
 
-        modelBuilder.Entity<proveedor>(entity =>
+        modelBuilder.Entity<LoginAuditoria>(entity =>
         {
-            entity.HasKey(e => e.id).HasName("proveedor_pkey");
+            entity.HasKey(e => e.Id).HasName("login_auditoria_pkey");
+
+            entity.Property(e => e.FechaHora).HasDefaultValueSql("now()");
+
+            entity.HasOne(d => d.Usuario).WithMany(p => p.LoginAuditoria)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("login_auditoria_usuario_id_fkey");
         });
 
-        modelBuilder.Entity<salida>(entity =>
+        modelBuilder.Entity<Proveedor>(entity =>
         {
-            entity.HasKey(e => e.id).HasName("salida_pkey");
+            entity.HasKey(e => e.Id).HasName("proveedor_pkey");
+        });
 
-            entity.Property(e => e.creado_en).HasDefaultValueSql("now()");
+        modelBuilder.Entity<Rol>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("rol_pkey");
 
-            entity.HasOne(d => d.area).WithMany(p => p.salida)
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
+        });
+
+        modelBuilder.Entity<Salida>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("salida_pkey");
+
+            entity.Property(e => e.CreadoEn).HasDefaultValueSql("now()");
+
+            entity.HasOne(d => d.Area).WithMany(p => p.Salida)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("salida_area_id_fkey");
 
-            entity.HasOne(d => d.existencia).WithMany(p => p.salida)
+            entity.HasOne(d => d.Existencia).WithMany(p => p.Salida)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("salida_existencia_id_fkey");
         });
 
-        modelBuilder.Entity<tipo_bien>(entity =>
+        modelBuilder.Entity<TipoBien>(entity =>
         {
-            entity.HasKey(e => e.id).HasName("tipo_bien_pkey");
+            entity.HasKey(e => e.Id).HasName("tipo_bien_pkey");
         });
 
-        modelBuilder.Entity<traslado_activo>(entity =>
+        modelBuilder.Entity<TrasladoActivo>(entity =>
         {
-            entity.HasKey(e => e.id).HasName("traslado_activo_pkey");
+            entity.HasKey(e => e.Id).HasName("traslado_activo_pkey");
 
-            entity.Property(e => e.creado_en).HasDefaultValueSql("now()");
-            entity.Property(e => e.fecha).HasDefaultValueSql("CURRENT_DATE");
+            entity.Property(e => e.CreadoEn).HasDefaultValueSql("now()");
+            entity.Property(e => e.Fecha).HasDefaultValueSql("CURRENT_DATE");
 
-            entity.HasOne(d => d.activo).WithMany(p => p.traslado_activo).HasConstraintName("traslado_activo_activo_id_fkey");
+            entity.HasOne(d => d.Activo).WithMany(p => p.TrasladoActivo).HasConstraintName("traslado_activo_activo_id_fkey");
 
-            entity.HasOne(d => d.area_destino).WithMany(p => p.traslado_activoarea_destino)
+            entity.HasOne(d => d.AreaDestino).WithMany(p => p.TrasladoActivoAreaDestino)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("traslado_activo_area_destino_id_fkey");
 
-            entity.HasOne(d => d.area_origen).WithMany(p => p.traslado_activoarea_origen)
+            entity.HasOne(d => d.AreaOrigen).WithMany(p => p.TrasladoActivoAreaOrigen)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("traslado_activo_area_origen_id_fkey");
         });
 
-        modelBuilder.Entity<v_existencias_niveles>(entity =>
+        modelBuilder.Entity<Usuario>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("usuario_pkey");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.CreadoEn).HasDefaultValueSql("now()");
+            entity.Property(e => e.FailedAttempts).HasDefaultValue((short)0);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+
+            entity.HasOne(d => d.Area).WithMany(p => p.Usuario)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("usuario_area_id_fkey");
+
+            entity.HasMany(d => d.Rol).WithMany(p => p.Usuario)
+                .UsingEntity<Dictionary<string, object>>(
+                    "UsuarioRol",
+                    r => r.HasOne<Rol>().WithMany()
+                        .HasForeignKey("RolId")
+                        .HasConstraintName("usuario_rol_rol_id_fkey"),
+                    l => l.HasOne<Usuario>().WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .HasConstraintName("usuario_rol_usuario_id_fkey"),
+                    j =>
+                    {
+                        j.HasKey("UsuarioId", "RolId").HasName("usuario_rol_pkey");
+                        j.ToTable("usuario_rol");
+                        j.IndexerProperty<Guid>("UsuarioId").HasColumnName("usuario_id");
+                        j.IndexerProperty<Guid>("RolId").HasColumnName("rol_id");
+                    });
+        });
+
+        modelBuilder.Entity<VExistenciasNiveles>(entity =>
         {
             entity.ToView("v_existencias_niveles");
         });
 
-        modelBuilder.Entity<v_existencias_por_area>(entity =>
+        modelBuilder.Entity<VExistenciasPorArea>(entity =>
         {
             entity.ToView("v_existencias_por_area");
         });
 
-        modelBuilder.Entity<v_movimientos_existencia>(entity =>
+        modelBuilder.Entity<VMovimientosExistencia>(entity =>
         {
             entity.ToView("v_movimientos_existencia");
         });

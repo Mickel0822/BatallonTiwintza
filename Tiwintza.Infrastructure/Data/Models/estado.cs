@@ -6,18 +6,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Tiwintza.Infrastructure.Data.Models;
 
-[Index("nombre", Name = "estado_nombre_key", IsUnique = true)]
-public partial class estado
+[Table("estado")]
+[Index("Nombre", Name = "estado_nombre_key", IsUnique = true)]
+public partial class Estado
 {
     [Key]
-    public long id { get; set; }
+    [Column("id")]
+    public long Id { get; set; }
 
-    public string nombre { get; set; } = null!;
+    [Column("nombre")]
+    public string Nombre { get; set; } = null!;
 
-    public bool es_baja { get; set; }
+    [Column("es_baja")]
+    public bool EsBaja { get; set; }
 
-    public bool es_operativo { get; set; }
+    [Column("es_operativo")]
+    public bool EsOperativo { get; set; }
 
-    [InverseProperty("estado")]
-    public virtual ICollection<activo> activo { get; set; } = new List<activo>();
+    [InverseProperty("Estado")]
+    public virtual ICollection<Activo> Activo { get; set; } = new List<Activo>();
 }
