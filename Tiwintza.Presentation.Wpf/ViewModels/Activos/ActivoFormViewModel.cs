@@ -212,10 +212,10 @@ public sealed partial class ActivoFormViewModel : ObservableValidator
             ClearErrors(nameof(CodigoInventario));
 
             // Agrega el error usando ValidationResult (no string plano)
-            SetErrors(nameof(CodigoInventario), new[]
-            {
-            new ValidationResult("El código ya existe. Ingrese uno diferente.", new[] { nameof(CodigoInventario) })
-            });
+            //SetErrors(nameof(CodigoInventario), new[]
+            //{
+            //new ValidationResult("El código ya existe. Ingrese uno diferente.", new[] { nameof(CodigoInventario) })
+            //});
 
             // Notifica a la vista
             OnPropertyChanged(nameof(CodigoInventario));
