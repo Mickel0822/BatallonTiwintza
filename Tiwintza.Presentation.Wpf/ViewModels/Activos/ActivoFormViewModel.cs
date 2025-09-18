@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
@@ -205,8 +204,7 @@ public sealed partial class ActivoFormViewModel : ObservableValidator
             }
         }
 
-        catch (DbUpdateException ex) when (
-            ex.InnerException?.Message.Contains("activo_codigo_inventario_key", StringComparison.OrdinalIgnoreCase) == true)
+        catch (DuplicateCodeException)
         {
             // Limpia errores previos de la propiedad
             ClearErrors(nameof(CodigoInventario));
@@ -222,4 +220,8 @@ public sealed partial class ActivoFormViewModel : ObservableValidator
             OnPropertyChanged(nameof(PuedeGuardar));
         }
     }
+
+    partial void OnVidaUtilMesesChanged(int? value) => OnPropertyChanged(nameof(VidaUtilEnAniosHint));
+    partial void OnDepreciacionMensualChanged(decimal? value) => OnPropertyChanged(nameof(DepreciacionAnualHint));
+    partial void OnValorUnitarioChanged(decimal value) => OnPropertyChanged(nameof(DepreciacionAnualHint));
 }
