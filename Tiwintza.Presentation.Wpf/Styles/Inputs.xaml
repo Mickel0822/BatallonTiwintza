@@ -139,13 +139,14 @@
                                IsHitTestVisible="False"/>
 
                         <!-- Texto seleccionado (SelectedItem.Nombre) -->
-                        <TextBlock x:Name="SelectedText"
-                               Margin="{TemplateBinding Padding}"
-                               VerticalAlignment="Center"
-                               TextTrimming="CharacterEllipsis"
-                               Text="{Binding SelectedItem.Nombre,
-                                              RelativeSource={RelativeSource TemplatedParent}}"
-                               IsHitTestVisible="False"/>
+                         <ContentPresenter x:Name="SelectedContent"
+                                           Margin="{TemplateBinding Padding}"
+                                           VerticalAlignment="Center"
+                                           Content="{TemplateBinding SelectionBoxItem}"
+                                           ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                           ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                           TextElement.Foreground="{DynamicResource OnSurfaceBrush}"
+                                           IsHitTestVisible="False"/>
 
                         <!-- Flecha -->
                         <Path x:Name="Arrow"
@@ -203,19 +204,19 @@
                         <!-- Mostrar placeholder cuando NO hay selección -->
                         <Trigger Property="SelectedIndex" Value="-1">
                             <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
-                            <Setter TargetName="SelectedText" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="SelectedContent" Property="Visibility" Value="Collapsed"/>
                         </Trigger>
 
                         <!-- Mostrar placeholder cuando SelectedValue es null (ej. converter 0->null) -->
                         <Trigger Property="SelectedValue" Value="{x:Null}">
                             <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
-                            <Setter TargetName="SelectedText" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="SelectedContent" Property="Visibility" Value="Collapsed"/>
                         </Trigger>
 
                         <!-- Mostrar placeholder cuando SelectedItem es null -->
                         <Trigger Property="SelectedItem" Value="{x:Null}">
                             <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
-                            <Setter TargetName="SelectedText" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="SelectedContent" Property="Visibility" Value="Collapsed"/>
                         </Trigger>
 
                         <!-- Mostrar placeholder cuando el sentinela (Id = 0) está seleccionado -->
@@ -224,7 +225,7 @@
                                 <sys:Int64>0</sys:Int64>
                             </DataTrigger.Value>
                             <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
-                            <Setter TargetName="SelectedText" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="SelectedContent" Property="Visibility" Value="Collapsed"/>
                         </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

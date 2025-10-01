@@ -5,6 +5,7 @@
         Title="Control de Activos - Tiwintza"
         Height="720" Width="1180"
         WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
         Background="{StaticResource AppGradient}"
         UseLayoutRounding="True" 
         SnapsToDevicePixels="True">
@@ -83,7 +84,13 @@
         <Border Grid.Column="0" CornerRadius="16" Background="{StaticResource SidebarBrush}" Padding="16">
             <DockPanel LastChildFill="True">
                 <StackPanel DockPanel.Dock="Top">
-                    <TextBlock Text="Batallón Tiwintza" Foreground="White" FontWeight="SemiBold" FontSize="18" Margin="4,0,0,12"/>
+                    <Image Source="/Assets/tiwintza-logo.png"
+                            Width="113" Height="83" Stretch="Uniform">
+                        <Image.Effect>
+                            <DropShadowEffect BlurRadius="10" ShadowDepth="1" Opacity="0.45"/>
+                        </Image.Effect>
+                    </Image>
+
                     <Separator Margin="0,0,0,8" Background="{StaticResource SidebarDividerBrush}"/>
                 </StackPanel>
 
@@ -97,7 +104,7 @@
             </DockPanel>
         </Border>
 
-        
+
 
         <!-- Contenido -->
         <Border Grid.Column="2" CornerRadius="16" Background="{StaticResource  CreamBrush}" Padding="0">

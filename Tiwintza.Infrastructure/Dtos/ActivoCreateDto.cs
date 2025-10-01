@@ -19,6 +19,7 @@ public class ActivoCreateDto
     public long? ProveedorId { get; set; }
     public int? VidaUtilMeses { get; set; }
     public decimal? DepreciacionMensual { get; set; }
+    public bool DocumentoAutorizacion { get; set; }
     public int? GarantiaMeses { get; set; }
     public string? Observaciones { get; set; }
 }
