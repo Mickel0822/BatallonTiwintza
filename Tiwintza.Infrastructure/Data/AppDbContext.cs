@@ -68,6 +68,10 @@ public partial class AppDbContext : DbContext
 
             entity.Property(e => e.CreadoEn).HasDefaultValueSql("now()");
 
+            entity.Property(e => e.DocumentoAutorizacion)
+                .HasDefaultValue(false);
+
+
             entity.HasOne(d => d.Area).WithMany(p => p.Activo)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("activo_area_id_fkey");

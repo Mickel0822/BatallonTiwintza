@@ -5,6 +5,7 @@
         Title="Control de Activos - Tiwintza"
         Height="720" Width="1180"
         WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
         Background="{StaticResource AppGradient}"
         UseLayoutRounding="True" 
         SnapsToDevicePixels="True">

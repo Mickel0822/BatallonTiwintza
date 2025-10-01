@@ -1,13 +1,13 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading.Tasks;
 using Tiwintza.Infrastructure.Common;
 using Tiwintza.Infrastructure.Dtos;
 using Tiwintza.Infrastructure.Services;
-
 
 namespace Tiwintza.Presentation.Wpf.ViewModels.Activos;
 
@@ -26,6 +26,8 @@ public sealed partial class ActivoFormViewModel : ObservableValidator
     public ObservableCollection<IdNombreDto> Estados { get; } = new();
     public ObservableCollection<IdNombreDto> Areas { get; } = new();
     public ObservableCollection<ProveedorDto> Proveedores { get; } = new();
+    public ObservableCollection<ActivoMovimientoDto> Movimientos { get; } = new();
+    [ObservableProperty] private string? codigoInventarioError;
 
     // ===== Campos =====
     [ObservableProperty, NotifyDataErrorInfo]
@@ -62,8 +64,22 @@ public sealed partial class ActivoFormViewModel : ObservableValidator
     [ObservableProperty] private int? vidaUtilMeses;
     [ObservableProperty] private int? garantiaMeses;
     [ObservableProperty] private decimal? depreciacionMensual;
+    [ObservableProperty] private bool documentoAutorizacion;
+    [ObservableProperty] private bool isProveedorQuickAddVisible;
+    [ObservableProperty] private bool isProveedorQuickAddBusy;
+    [ObservableProperty] private string? proveedorQuickAddError;
+    [ObservableProperty] private string? nuevoProveedorRuc;
+    [ObservableProperty] private string? nuevoProveedorRazonSocial;
+    [ObservableProperty] private string? nuevoProveedorContacto;
+    [ObservableProperty] private string? nuevoProveedorTelefono;
+    [ObservableProperty] private string? nuevoProveedorEmail;
 
-    public string VidaUtilEnAniosHint => VidaUtilMeses is > 0 ? $"≈ {VidaUtilMeses / 12.0:0.0} años" : "Tiempo estimado de vida útil";
+    public bool DebeMostrarParametrosContables => DocumentoAutorizacion;
+    public bool PuedeGuardarProveedor => !IsProveedorQuickAddBusy
+                                         && !string.IsNullOrWhiteSpace(NuevoProveedorRuc)
+                                         && !string.IsNullOrWhiteSpace(NuevoProveedorRazonSocial);
+
+    public string VidaUtilEnAniosHint => VidaUtilMeses is > 0 ? $"~ {VidaUtilMeses / 12.0:0.0} años" : "Tiempo estimado de vida útil";
     public string DepreciacionAnualHint =>
         ValorUnitario <= 0 || (DepreciacionMensual ?? 0m) <= 0m
             ? "Porcentaje anual aproximado"
@@ -83,7 +99,11 @@ public sealed partial class ActivoFormViewModel : ObservableValidator
         _crud = crud;
 
         ErrorsChanged += (_, __) => OnPropertyChanged(nameof(PuedeGuardar));
-        PropertyChanged += (_, __) => OnPropertyChanged(nameof(PuedeGuardar));
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(PuedeGuardar))
+                OnPropertyChanged(nameof(PuedeGuardar));
+        };
     }
 
     // ===== Inicialización =====
@@ -92,10 +112,13 @@ public sealed partial class ActivoFormViewModel : ObservableValidator
         EsEdicion = false;
         await CargarCatalogosAsync();
 
-        // estado por defecto "Bueno" si existe
+        DocumentoAutorizacion = false;
+        Movimientos.Clear();
+        LimpiarProveedorQuickAdd();
+        IsProveedorQuickAddVisible = false;
+
         var bueno = Estados.FirstOrDefault(e => string.Equals(e.Nombre, "Bueno", StringComparison.OrdinalIgnoreCase));
         EstadoId ??= bueno?.Id;
-
         FechaCompraDateTime ??= DateTime.Today;
     }
 
@@ -119,10 +142,29 @@ public sealed partial class ActivoFormViewModel : ObservableValidator
         ValorUnitario = e.ValorUnitario;
         FechaCompraDateTime = e.FechaCompra is null ? null : e.FechaCompra.Value.ToDateTime(TimeOnly.MinValue);
         ProveedorId = e.ProveedorId;
-        VidaUtilMeses = e.VidaUtilMeses;
-        DepreciacionMensual = e.DepreciacionMensual;
-        GarantiaMeses = e.GarantiaMeses;
+        DocumentoAutorizacion = e.DocumentoAutorizacion;
+
+        if (DocumentoAutorizacion)
+        {
+            VidaUtilMeses = e.VidaUtilMeses;
+            DepreciacionMensual = e.DepreciacionMensual;
+            GarantiaMeses = e.GarantiaMeses;
+        }
+        else
+        {
+            VidaUtilMeses = null;
+            DepreciacionMensual = null;
+            GarantiaMeses = null;
+        }
+
         Observaciones = e.Observaciones;
+
+        Movimientos.Clear();
+        var movimientos = await _crud.MovimientosAsync(id);
+        foreach (var movimiento in movimientos)
+        {
+            Movimientos.Add(movimiento);
+        }
     }
 
     private async Task CargarCatalogosAsync()
@@ -146,7 +188,12 @@ public sealed partial class ActivoFormViewModel : ObservableValidator
         ValidateAllProperties();
         if (!PuedeGuardar) return;
 
+        CodigoInventarioError = null;
+
         var fecCompra = FechaCompraDateTime.HasValue ? DateOnly.FromDateTime(FechaCompraDateTime.Value.Date) : (DateOnly?)null;
+        var vidaUtil = DocumentoAutorizacion ? VidaUtilMeses : null;
+        var depreciacion = DocumentoAutorizacion ? DepreciacionMensual : null;
+        var garantia = DocumentoAutorizacion ? GarantiaMeses : null;
 
         try
         {
@@ -167,9 +214,10 @@ public sealed partial class ActivoFormViewModel : ObservableValidator
                     ValorUnitario = ValorUnitario,
                     FechaCompra = fecCompra,
                     ProveedorId = ProveedorId,
-                    VidaUtilMeses = VidaUtilMeses,
-                    DepreciacionMensual = DepreciacionMensual,
-                    GarantiaMeses = GarantiaMeses,
+                    VidaUtilMeses = vidaUtil,
+                    DepreciacionMensual = depreciacion,
+                    DocumentoAutorizacion = DocumentoAutorizacion,
+                    GarantiaMeses = garantia,
                     Observaciones = Observaciones
                 };
 
@@ -193,35 +241,176 @@ public sealed partial class ActivoFormViewModel : ObservableValidator
                     ValorUnitario = ValorUnitario,
                     FechaCompra = fecCompra,
                     ProveedorId = ProveedorId,
-                    VidaUtilMeses = VidaUtilMeses,
-                    DepreciacionMensual = DepreciacionMensual,
-                    GarantiaMeses = GarantiaMeses,
+                    VidaUtilMeses = vidaUtil,
+                    DepreciacionMensual = depreciacion,
+                    DocumentoAutorizacion = DocumentoAutorizacion,
+                    GarantiaMeses = garantia,
                     Observaciones = Observaciones
                 };
 
-                var id = await _crud.CrearAsync(dto);
-                Guardado?.Invoke(id);
+                var nuevoId = await _crud.CrearAsync(dto);
+                Guardado?.Invoke(nuevoId);
             }
         }
-
         catch (DuplicateCodeException)
         {
-            // Limpia errores previos de la propiedad
             ClearErrors(nameof(CodigoInventario));
-
-            // Agrega el error usando ValidationResult (no string plano)
-            //SetErrors(nameof(CodigoInventario), new[]
-            //{
-            //new ValidationResult("El código ya existe. Ingrese uno diferente.", new[] { nameof(CodigoInventario) })
-            //});
-
-            // Notifica a la vista
+            CodigoInventarioError = "El código ya existe. Ingrese uno diferente.";
             OnPropertyChanged(nameof(CodigoInventario));
             OnPropertyChanged(nameof(PuedeGuardar));
         }
     }
 
-    partial void OnVidaUtilMesesChanged(int? value) => OnPropertyChanged(nameof(VidaUtilEnAniosHint));
-    partial void OnDepreciacionMensualChanged(decimal? value) => OnPropertyChanged(nameof(DepreciacionAnualHint));
-    partial void OnValorUnitarioChanged(decimal value) => OnPropertyChanged(nameof(DepreciacionAnualHint));
+    [RelayCommand]
+    private void MostrarAgregarProveedor()
+    {
+        IsProveedorQuickAddVisible = true;
+        ProveedorQuickAddError = null;
+    }
+
+    [RelayCommand]
+    private void CancelarAgregarProveedor()
+    {
+        IsProveedorQuickAddVisible = false;
+        LimpiarProveedorQuickAdd();
+    }
+
+    [RelayCommand]
+    private async Task GuardarProveedorRapidoAsync()
+    {
+        if (IsProveedorQuickAddBusy) return;
+
+        ProveedorQuickAddError = null;
+
+        if (!ValidarProveedorQuickAdd(out var mensaje))
+        {
+            ProveedorQuickAddError = mensaje;
+            return;
+        }
+
+        IsProveedorQuickAddBusy = true;
+
+        try
+        {
+            var dto = new ProveedorCreateDto
+            {
+                Ruc = NuevoProveedorRuc!.Trim(),
+                RazonSocial = NuevoProveedorRazonSocial!.Trim(),
+                Contacto = string.IsNullOrWhiteSpace(NuevoProveedorContacto) ? null : NuevoProveedorContacto.Trim(),
+                Telefono = string.IsNullOrWhiteSpace(NuevoProveedorTelefono) ? null : NuevoProveedorTelefono.Trim(),
+                Email = string.IsNullOrWhiteSpace(NuevoProveedorEmail) ? null : NuevoProveedorEmail.Trim()
+            };
+
+            var proveedor = await _crud.CrearProveedorRapidoAsync(dto);
+
+            if (Proveedores.All(p => p.Id != proveedor.Id))
+            {
+                Proveedores.Add(proveedor);
+            }
+
+            ProveedorId = proveedor.Id;
+            LimpiarProveedorQuickAdd();
+            IsProveedorQuickAddVisible = false;
+        }
+        catch (DuplicateCodeException)
+        {
+            ProveedorQuickAddError = "El RUC ya se encuentra registrado.";
+        }
+        catch (Exception ex)
+        {
+            ProveedorQuickAddError = ex.Message;
+        }
+        finally
+        {
+            IsProveedorQuickAddBusy = false;
+        }
+    }
+
+    private bool ValidarProveedorQuickAdd(out string? mensaje)
+    {
+        if (string.IsNullOrWhiteSpace(NuevoProveedorRuc))
+        {
+            mensaje = "El RUC es obligatorio.";
+            return false;
+        }
+
+        var ruc = NuevoProveedorRuc.Trim();
+        if (ruc.Length != 13 || !ruc.All(char.IsDigit))
+        {
+            mensaje = "El RUC debe tener 13 dígitos.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(NuevoProveedorRazonSocial))
+        {
+            mensaje = "La razón social es obligatoria.";
+            return false;
+        }
+
+        mensaje = null;
+        return true;
+    }
+
+    private void LimpiarProveedorQuickAdd()
+    {
+        NuevoProveedorRuc = null;
+        NuevoProveedorRazonSocial = null;
+        NuevoProveedorContacto = null;
+        NuevoProveedorTelefono = null;
+        NuevoProveedorEmail = null;
+        ProveedorQuickAddError = null;
+    }
+
+    private void RecalcularDepreciacionAutomatica()
+    {
+        if (!DocumentoAutorizacion) return;
+        if (VidaUtilMeses is null || VidaUtilMeses <= 0) return;
+        if (ValorUnitario <= 0) return;
+
+        var calculada = Math.Round(ValorUnitario / VidaUtilMeses.Value, 2);
+        if (!DepreciacionMensual.HasValue || Math.Abs(DepreciacionMensual.Value - calculada) > 0.01m)
+        {
+            DepreciacionMensual = calculada;
+        }
+    }
+
+    partial void OnVidaUtilMesesChanged(int? value)
+    {
+        OnPropertyChanged(nameof(VidaUtilEnAniosHint));
+        RecalcularDepreciacionAutomatica();
+        OnPropertyChanged(nameof(DepreciacionAnualHint));
+    }
+
+    partial void OnDepreciacionMensualChanged(decimal? value)
+    {
+        OnPropertyChanged(nameof(DepreciacionAnualHint));
+    }
+
+    partial void OnValorUnitarioChanged(decimal value)
+    {
+        RecalcularDepreciacionAutomatica();
+        OnPropertyChanged(nameof(DepreciacionAnualHint));
+    }
+
+    partial void OnDocumentoAutorizacionChanged(bool value)
+    {
+        OnPropertyChanged(nameof(DebeMostrarParametrosContables));
+        OnPropertyChanged(nameof(DepreciacionAnualHint));
+
+        if (!value)
+        {
+            VidaUtilMeses = null;
+            DepreciacionMensual = null;
+            GarantiaMeses = null;
+        }
+        else
+        {
+            RecalcularDepreciacionAutomatica();
+        }
+    }
+
+    partial void OnNuevoProveedorRucChanged(string? value) => OnPropertyChanged(nameof(PuedeGuardarProveedor));
+    partial void OnNuevoProveedorRazonSocialChanged(string? value) => OnPropertyChanged(nameof(PuedeGuardarProveedor));
+    partial void OnIsProveedorQuickAddBusyChanged(bool value) => OnPropertyChanged(nameof(PuedeGuardarProveedor));
 }
+

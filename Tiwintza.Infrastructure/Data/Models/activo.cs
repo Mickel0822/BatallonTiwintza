@@ -67,6 +67,8 @@ public partial class Activo
     [Column("depreciacion_mensual")]
     [Precision(12, 2)]
     public decimal? DepreciacionMensual { get; set; }
+    [Column("documento_autorizacion")]
+    public bool DocumentoAutorizacion { get; set; }
 
     [Column("garantia_meses")]
     public int? GarantiaMeses { get; set; }

@@ -1,4 +1,4 @@
-﻿// IActivosService.cs
+// IActivosService.cs
 using Tiwintza.Infrastructure.Common;
 using Tiwintza.Infrastructure.Dtos;
 
@@ -8,11 +8,13 @@ public interface IActivosService
 {
     Task<PagedResult<ActivoListItemDto>> BuscarAsync(ActivoFiltro filtro, CancellationToken ct = default);
 
-    // KPIs con filtros (ignora IncluirBaja; separa Operativos vs EnBaja)
+    // KPIs con filtros (separa Operativos vs EnBaja)
     Task<(int total, int operativos, int enBaja)> ResumenAsync(ActivoFiltro filtro, CancellationToken ct = default);
 
-    // Catálogos para los combos
+    // Cat�logos para los combos
     Task<(IReadOnlyList<IdNombreDto> areas,
           IReadOnlyList<IdNombreDto> estados,
           IReadOnlyList<IdNombreDto> tipos)> CatalogosAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<ActivoExcelDto>> ExportarMaestroAsync(ActivoFiltro filtro, CancellationToken ct = default);
 }
+

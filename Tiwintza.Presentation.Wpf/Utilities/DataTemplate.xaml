@@ -18,4 +18,15 @@
     </DataTemplate>
 
     <!-- ❌ quita cualquier DataTemplate que apunte a vm:ActivosViewModel antiguo -->
+    <!-- Formularios de Activos -->
+    <DataTemplate DataType="{x:Type vmAct:ActivoFormViewModel}">
+        <viewsAct:ActivoFormView/>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmAct:ActivoTrasladoViewModel}">
+        <viewsAct:ActivoTrasladoView/>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmAct:ActivoBajaViewModel}">
+        <viewsAct:ActivoBajaView/>
+    </DataTemplate>
+
 </ResourceDictionary>

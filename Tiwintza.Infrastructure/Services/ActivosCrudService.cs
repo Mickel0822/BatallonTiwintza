@@ -1,3 +1,4 @@
+using System;
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,6 +14,9 @@ namespace Tiwintza.Infrastructure.Services;
 public sealed class ActivosCrudService : IActivosCrudService
 {
     private readonly AppDbContext _db;
+    private const string AreaProcesoBajaNombre = "Bodega en proceso de baja";
+    private const string AreaBajaNombre = "Bodega de Baja";
+    private const string EstadoMaloNombre = "Malo";
     public ActivosCrudService(AppDbContext db) => _db = db;
 
     public async Task<(IEnumerable<IdNombreDto> Areas,
@@ -47,6 +51,57 @@ public sealed class ActivosCrudService : IActivosCrudService
         return (areas, estados, tipos, proveedores);
     }
 
+    public async Task<IReadOnlyList<ActivoMovimientoDto>> MovimientosAsync(long activoId)
+    {
+        return await _db.TrasladoActivo.AsNoTracking()
+            .Where(t => t.ActivoId == activoId)
+            .OrderByDescending(t => t.Fecha)
+            .Select(t => new ActivoMovimientoDto
+            {
+                Fecha = t.Fecha,
+                AreaOrigen = t.AreaOrigen.Nombre,
+                AreaDestino = t.AreaDestino.Nombre,
+                Observacion = t.Observacion,
+                Usuario = t.Usuario
+            })
+            .ToListAsync();
+    }
+
+    public async Task<ProveedorDto> CrearProveedorRapidoAsync(ProveedorCreateDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Ruc))
+        {
+            throw new ArgumentException("El RUC es obligatorio", nameof(dto));
+        }
+        if (string.IsNullOrWhiteSpace(dto.RazonSocial))
+        {
+            throw new ArgumentException("La razon social es obligatoria", nameof(dto));
+        }
+        var proveedor = new Proveedor
+        {
+            Ruc = dto.Ruc.Trim(),
+            RazonSocial = dto.RazonSocial.Trim(),
+            Contacto = string.IsNullOrWhiteSpace(dto.Contacto) ? null : dto.Contacto.Trim(),
+            Telefono = string.IsNullOrWhiteSpace(dto.Telefono) ? null : dto.Telefono.Trim(),
+            Email = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email.Trim()
+        };
+        _db.Proveedor.Add(proveedor);
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg &&
+                                           pg.ConstraintName == "proveedor_ruc_key")
+        {
+            throw new DuplicateCodeException("El RUC del proveedor ya existe.");
+        }
+        return new ProveedorDto
+        {
+            Id = proveedor.Id,
+            RazonSocial = proveedor.RazonSocial
+        };
+    }
+
     public async Task<ActivoFormDto> ObtenerAsync(long id)
     {
         var e = await _db.Activo.AsNoTracking().FirstAsync(x => x.Id == id);
@@ -68,6 +123,7 @@ public sealed class ActivosCrudService : IActivosCrudService
             ProveedorId = e.ProveedorId,
             VidaUtilMeses = e.VidaUtilMeses,
             DepreciacionMensual = e.DepreciacionMensual,
+            DocumentoAutorizacion = e.DocumentoAutorizacion,
             GarantiaMeses = e.GarantiaMeses,
             Observaciones = e.Observaciones
         };
@@ -92,6 +148,7 @@ public sealed class ActivosCrudService : IActivosCrudService
             ProveedorId = d.ProveedorId,
             VidaUtilMeses = d.VidaUtilMeses,
             DepreciacionMensual = d.DepreciacionMensual,
+            DocumentoAutorizacion = d.DocumentoAutorizacion,
             GarantiaMeses = d.GarantiaMeses,
             Observaciones = d.Observaciones
         };
@@ -128,6 +185,7 @@ public sealed class ActivosCrudService : IActivosCrudService
         e.ProveedorId = d.ProveedorId;
         e.VidaUtilMeses = d.VidaUtilMeses;
         e.DepreciacionMensual = d.DepreciacionMensual;
+        e.DocumentoAutorizacion = d.DocumentoAutorizacion;
         e.GarantiaMeses = d.GarantiaMeses;
         e.Observaciones = d.Observaciones;
 
@@ -141,4 +199,107 @@ public sealed class ActivosCrudService : IActivosCrudService
             throw new DuplicateCodeException("El código ya existe.");
         }
     }
+
+    public async Task TrasladarAsync(long activoId, long areaDestinoId, DateOnly fecha, string? observacion = null, string? usuario = null)
+    {
+        var activo = await _db.Activo.FirstAsync(x => x.Id == activoId);
+        var areaOrigenId = activo.AreaId;
+        if (areaOrigenId == areaDestinoId)
+        {
+            return;
+        }
+
+        var areaDestino = await _db.Area.FindAsync(areaDestinoId);
+        if (areaDestino is null)
+        {
+            throw new InvalidOperationException($"El area destino con id {areaDestinoId} no existe.");
+        }
+
+        if (NombreCoincide(areaDestino.Nombre, AreaProcesoBajaNombre))
+        {
+            await AsignarEstadoAsync(activo, EstadoMaloNombre);
+        }
+
+        var movimiento = new TrasladoActivo
+        {
+            ActivoId = activoId,
+            AreaOrigenId = areaOrigenId,
+            AreaDestinoId = areaDestinoId,
+            Fecha = fecha,
+            Observacion = observacion,
+            Usuario = usuario
+        };
+        _db.TrasladoActivo.Add(movimiento);
+        activo.AreaId = areaDestinoId;
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task DarBajaAsync(long activoId, string codigoInformeTecnico, DateOnly fechaBaja, string responsable, string? observaciones = null)
+    {
+        var yaBaja = await _db.BajaActivo.AnyAsync(b => b.ActivoId == activoId);
+        if (yaBaja) return;
+
+        var activo = await _db.Activo.FirstAsync(x => x.Id == activoId);
+        var baja = new BajaActivo
+        {
+            ActivoId = activoId,
+            CodigoInformeTecnico = codigoInformeTecnico,
+            FechaBaja = fechaBaja,
+            Responsable = responsable,
+            Observaciones = observaciones
+        };
+        _db.BajaActivo.Add(baja);
+
+        var areaDestinoId = await BuscarAreaIdPorNombreAsync(AreaBajaNombre);
+        if (areaDestinoId is long areaDestino && areaDestino != activo.AreaId)
+        {
+            var areaOrigenId = activo.AreaId;
+            var traslado = new TrasladoActivo
+            {
+                ActivoId = activoId,
+                AreaOrigenId = areaOrigenId,
+                AreaDestinoId = areaDestino,
+                Fecha = fechaBaja,
+                Observacion = observaciones,
+                Usuario = responsable
+            };
+            _db.TrasladoActivo.Add(traslado);
+            activo.AreaId = areaDestino;
+        }
+
+        await AsignarEstadoAsync(activo, EstadoMaloNombre);
+        await _db.SaveChangesAsync();
+    }
+
+    private static bool NombreCoincide(string? actual, string esperado) =>
+        !string.IsNullOrWhiteSpace(actual) &&
+        string.Equals(actual.Trim(), esperado, StringComparison.OrdinalIgnoreCase);
+
+    private Task<long?> BuscarAreaIdPorNombreAsync(string nombre)
+    {
+        var target = nombre.Trim().ToLowerInvariant();
+        return _db.Area
+            .Where(a => a.Nombre.Trim().ToLower() == target)
+            .Select(a => (long?)a.Id)
+            .FirstOrDefaultAsync();
+    }
+
+    private Task<long?> BuscarEstadoIdPorNombreAsync(string nombre)
+    {
+        var target = nombre.Trim().ToLowerInvariant();
+        return _db.Estado
+            .Where(e => e.Nombre.Trim().ToLower() == target)
+            .Select(e => (long?)e.Id)
+            .FirstOrDefaultAsync();
+    }
+
+    private async Task AsignarEstadoAsync(Activo activo, string estadoNombre)
+    {
+        var estadoId = await BuscarEstadoIdPorNombreAsync(estadoNombre);
+        if (estadoId is long id && activo.EstadoId != id)
+        {
+            activo.EstadoId = id;
+        }
+    }
+
 }
