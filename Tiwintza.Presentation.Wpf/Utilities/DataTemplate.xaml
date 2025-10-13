@@ -4,21 +4,21 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:views="clr-namespace:Tiwintza.Presentation.Wpf.Views"
     xmlns:viewsAct="clr-namespace:Tiwintza.Presentation.Wpf.Views.Activos"
+    xmlns:viewsExist="clr-namespace:Tiwintza.Presentation.Wpf.Views.Existencias"
     xmlns:vmDash="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels"
-    xmlns:vmAct="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Activos">
+    xmlns:vmAct="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Activos"
+    xmlns:vmExist="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Existencias">
 
     <!-- Dashboard -->
     <DataTemplate DataType="{x:Type vmDash:DashboardViewModel}">
         <views:DashboardView/>
     </DataTemplate>
 
-    <!-- Activos (nuevo) -->
+    <!-- Activos -->
     <DataTemplate DataType="{x:Type vmAct:ActivosListViewModel}">
         <viewsAct:ActivosView/>
     </DataTemplate>
 
-    <!-- ❌ quita cualquier DataTemplate que apunte a vm:ActivosViewModel antiguo -->
-    <!-- Formularios de Activos -->
     <DataTemplate DataType="{x:Type vmAct:ActivoFormViewModel}">
         <viewsAct:ActivoFormView/>
     </DataTemplate>
@@ -27,6 +27,17 @@
     </DataTemplate>
     <DataTemplate DataType="{x:Type vmAct:ActivoBajaViewModel}">
         <viewsAct:ActivoBajaView/>
+    </DataTemplate>
+
+    <!-- Existencias -->
+    <DataTemplate DataType="{x:Type vmExist:ExistenciasListViewModel}">
+        <viewsExist:ExistenciasView/>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmExist:ExistenciaIngresoViewModel}">
+        <viewsExist:ExistenciaIngresoView/>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmExist:ExistenciaSalidaViewModel}">
+        <viewsExist:ExistenciaSalidaView/>
     </DataTemplate>
 
 </ResourceDictionary>

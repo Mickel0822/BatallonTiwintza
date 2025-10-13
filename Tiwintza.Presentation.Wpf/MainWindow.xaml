@@ -108,7 +108,8 @@
 
         <!-- Contenido -->
         <Border Grid.Column="2" CornerRadius="16" Background="{StaticResource  CreamBrush}" Padding="0">
-            <ContentControl Content="{Binding Current}"/>
+            <ContentControl Content="{Binding Current, 
+                  PresentationTraceSources.TraceLevel=High}"/>
         </Border>
     </Grid>
 </Window>

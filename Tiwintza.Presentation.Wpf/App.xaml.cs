@@ -13,6 +13,8 @@ using Tiwintza.Presentation.Wpf.Services;
 using Tiwintza.Presentation.Wpf.Services.Windows;
 using Tiwintza.Presentation.Wpf.ViewModels;
 using Tiwintza.Presentation.Wpf.ViewModels.Activos;
+using Tiwintza.Presentation.Wpf.ViewModels.Existencias;
+using Tiwintza.Presentation.Wpf.Views.Existencias;
 using Tiwintza.Presentation.Wpf.Views;
 using Tiwintza.Infrastructure;
 
@@ -70,6 +72,8 @@ namespace Tiwintza.Presentation.Wpf
                     services.AddScoped<IAuthService, AuthService>();
                     services.AddScoped<IActivosService, ActivosService>();
                     services.AddScoped<IActivosCrudService, ActivosCrudService>();
+                    services.AddScoped<IExistenciasService, ExistenciasService>();
+                    services.AddScoped<IExistenciasCrudService, ExistenciasCrudService>();
                     // --- FIN DE SERVICIOS DE INFRASTRUCTURE  ----
 
                     // Credential storage
@@ -79,10 +83,21 @@ namespace Tiwintza.Presentation.Wpf
                     services.AddTransient<LoginViewModel>();
                     services.AddTransient<DashboardViewModel>();
                     services.AddTransient<ActivosListViewModel>();
+                    services.AddTransient<ExistenciasListViewModel>();
+                    services.AddTransient<ExistenciaIngresoViewModel>();
+                    services.AddTransient<ExistenciaSalidaViewModel>();
+
+                    services.AddTransient<Func<ExistenciaIngresoViewModel>>(sp =>
+                            () => sp.GetRequiredService<ExistenciaIngresoViewModel>());
+
+                    services.AddTransient<Func<ExistenciaSalidaViewModel>>(sp =>
+                            () => sp.GetRequiredService<ExistenciaSalidaViewModel>());
+
                     services.AddSingleton<MainViewModel>(sp =>
                         new MainViewModel(
                             () => sp.GetRequiredService<DashboardViewModel>(),
-                            () => sp.GetRequiredService<ActivosListViewModel>()));
+                            () => sp.GetRequiredService<ActivosListViewModel>(),
+                            () => sp.GetRequiredService<ExistenciasListViewModel>()));
 
                     // Views
                     services.AddTransient<LoginWindow>();

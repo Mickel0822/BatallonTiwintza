@@ -1,0 +1,105 @@
+﻿<UserControl x:Class="Tiwintza.Presentation.Wpf.Views.Existencias.ExistenciaSalidaView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:conv="clr-namespace:Tiwintza.Presentation.Wpf.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="600"
+             d:DesignWidth="960">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+        <conv:StringNullToVisibilityConverter x:Key="StringNullToVisibility"/>
+    </UserControl.Resources>
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Existencias / Registrar salida" Style="{StaticResource Caption}" Foreground="{DynamicResource SecondaryBrush}"/>
+            <TextBlock Text="Registrar Salida" Style="{StaticResource H1}"/>
+            <TextBlock Text="Registre una salida o consumo de inventario" Style="{StaticResource Caption}"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Orientation="Vertical">
+            <Border Background="#FFFCE8E6" BorderBrush="#FFE57373" BorderThickness="1" CornerRadius="8" Padding="12" Visibility="{Binding ErrorMessage, Converter={StaticResource StringNullToVisibility}}">
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial Kind="AlertCircle" Width="20" Height="20" Foreground="#C62828"/>
+                    <TextBlock Text="{Binding ErrorMessage}" Margin="8,0,0,0" Foreground="#C62828" Style="{StaticResource Caption}"/>
+                </StackPanel>
+            </Border>
+
+            <Border Background="White" CornerRadius="12" Padding="24" BorderBrush="{DynamicResource GridBorderBrush}" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Vertical">
+                        <TextBlock Text="Producto" Style="{StaticResource Caption}"/>
+                        <ComboBox ItemsSource="{Binding Productos}"
+                                  SelectedItem="{Binding ProductoSeleccionado, Mode=TwoWay}"
+                                  DisplayMemberPath="Display"
+                                  Style="{StaticResource InputComboBox}"/>
+                        <TextBlock Text="{Binding StockDisponible, StringFormat=Stock disponible: {0}}" Style="{StaticResource Caption}" Foreground="{DynamicResource SecondaryBrush}" Margin="0,4,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical" Margin="0,12,16,0">
+                        <TextBlock Text="Cantidad" Style="{StaticResource Caption}"/>
+                        <TextBox Style="{StaticResource InputTextBox}" Text="{Binding Cantidad}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Vertical" Margin="16,12,0,0">
+                        <TextBlock Text="Fecha" Style="{StaticResource Caption}"/>
+                        <DatePicker SelectedDate="{Binding Fecha, Mode=TwoWay}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Vertical" Margin="0,12,16,0">
+                        <TextBlock Text="Area / Destino" Style="{StaticResource Caption}"/>
+                        <ComboBox ItemsSource="{Binding Areas}"
+                                  SelectedValue="{Binding AreaId, Mode=TwoWay}"
+                                  SelectedValuePath="Id"
+                                  DisplayMemberPath="Nombre"
+                                  Style="{StaticResource InputComboBox}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Vertical" Margin="16,12,0,0">
+                        <TextBlock Text="Responsable" Style="{StaticResource Caption}"/>
+                        <TextBox Style="{StaticResource InputTextBox}" Text="{Binding Responsable}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Vertical" Margin="0,12,0,0">
+                        <TextBlock Text="Observacion" Style="{StaticResource Caption}"/>
+                        <TextBox Style="{StaticResource InputTextBox}" Text="{Binding Observacion}" AcceptsReturn="True" Height="80"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Style="{StaticResource GhostButton.Small}" Command="{Binding VolverCommand}" Content="Volver"/>
+            <Button Style="{StaticResource GhostButton.Small}" Command="{Binding CancelarCommand}" Content="Cancelar" Margin="12,0,0,0"/>
+            <Button Style="{StaticResource PrimaryButton}" Command="{Binding GuardarCommand}" IsEnabled="{Binding PuedeGuardar}" Margin="12,0,0,0">
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial Kind="ContentSave" Width="16" Height="16" Margin="0,0,6,0"/>
+                    <TextBlock Text="Guardar"/>
+                </StackPanel>
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>
+

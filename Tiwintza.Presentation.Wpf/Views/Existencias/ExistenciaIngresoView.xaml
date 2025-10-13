@@ -1,0 +1,267 @@
+﻿<UserControl x:Class="Tiwintza.Presentation.Wpf.Views.Existencias.ExistenciaIngresoView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:conv="clr-namespace:Tiwintza.Presentation.Wpf.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="720"
+             d:DesignWidth="1080">
+
+    <!-- Converters locales que faltaban -->
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+        <conv:StringNullToVisibilityConverter x:Key="StringNullToVisibility"/>
+    </UserControl.Resources>
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Titulo -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Existencias / Registrar ingreso" Style="{StaticResource Caption}" Foreground="{DynamicResource SecondaryBrush}"/>
+            <TextBlock Text="Registrar Ingreso" Style="{StaticResource H1}"/>
+            <TextBlock Text="Registre una compra o ingreso de inventario" Style="{StaticResource Caption}"/>
+        </StackPanel>
+
+        <!-- Contenido -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Orientation="Vertical">
+
+                <!-- Mensaje de error -->
+                <Border Background="#FFFCE8E6" BorderBrush="#FFE57373" BorderThickness="1" CornerRadius="8" Padding="12"
+                        Visibility="{Binding ErrorMessage, Converter={StaticResource StringNullToVisibility}}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="AlertCircle" Width="20" Height="20" Foreground="#C62828"/>
+                        <TextBlock Text="{Binding ErrorMessage}" Margin="8,0,0,0" Foreground="#C62828" Style="{StaticResource Caption}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Informacion compra -->
+                <Border Background="White" CornerRadius="12" Padding="20" BorderBrush="{DynamicResource GridBorderBrush}" BorderThickness="1">
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Text="Informacion de la compra" Style="{StaticResource H3}"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Orientation="Vertical">
+                                <TextBlock Text="Proveedor" Style="{StaticResource Caption}"/>
+                                <DockPanel>
+                                    <ComboBox Width="Auto"
+                                              ItemsSource="{Binding Proveedores}"
+                                              SelectedValue="{Binding ProveedorId, Mode=TwoWay}"
+                                              SelectedValuePath="Id"
+                                              DisplayMemberPath="RazonSocial"
+                                              Style="{StaticResource InputComboBox}"/>
+                                    <Button Style="{StaticResource GhostButton.Small}"
+                                            Command="{Binding MostrarProveedorRapidoCommand}"
+                                            DockPanel.Dock="Right" Margin="8,0,0,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconMaterial Kind="AccountPlus" Width="16" Height="16" Margin="0,0,6,0"/>
+                                            <TextBlock Text="Nuevo"/>
+                                        </StackPanel>
+                                    </Button>
+                                </DockPanel>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Orientation="Vertical" Margin="16,0,0,0">
+                                <TextBlock Text="Numero de factura" Style="{StaticResource Caption}"/>
+                                <TextBox Style="{StaticResource InputTextBox}" Text="{Binding NumeroFactura}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Orientation="Vertical" Margin="16,0,0,0">
+                                <TextBlock Text="Fecha" Style="{StaticResource Caption}"/>
+                                <DatePicker SelectedDate="{Binding Fecha, Mode=TwoWay}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Quick add proveedor -->
+                        <Border Background="#FFF7FA"
+                                BorderBrush="{DynamicResource PrimaryBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="16"
+                                Visibility="{Binding IsProveedorQuickAddVisible, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Vertical">
+                                <TextBlock Text="Nuevo proveedor" Style="{StaticResource H4}"/>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Vertical">
+                                        <TextBlock Text="RUC" Style="{StaticResource Caption}"/>
+                                        <TextBox Style="{StaticResource InputTextBox}" Text="{Binding NuevoProveedorRuc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Vertical" Margin="12,0,0,0">
+                                        <TextBlock Text="Razon social" Style="{StaticResource Caption}"/>
+                                        <TextBox Style="{StaticResource InputTextBox}" Text="{Binding NuevoProveedorRazonSocial}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Vertical">
+                                        <TextBlock Text="Contacto" Style="{StaticResource Caption}"/>
+                                        <TextBox Style="{StaticResource InputTextBox}" Text="{Binding NuevoProveedorContacto}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Vertical" Margin="12,0,0,0">
+                                        <TextBlock Text="Telefono" Style="{StaticResource Caption}"/>
+                                        <TextBox Style="{StaticResource InputTextBox}" Text="{Binding NuevoProveedorTelefono}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Vertical" Margin="12,0,0,0">
+                                        <TextBlock Text="Email" Style="{StaticResource Caption}"/>
+                                        <TextBox Style="{StaticResource InputTextBox}" Text="{Binding NuevoProveedorEmail}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="{Binding ProveedorQuickAddError}"
+                                           Foreground="#C62828"
+                                           Visibility="{Binding ProveedorQuickAddError, Converter={StaticResource StringNullToVisibility}}"/>
+
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Style="{StaticResource GhostButton.Small}"
+                                            Command="{Binding CancelarProveedorRapidoCommand}" Content="Cancelar"/>
+                                    <Button Style="{StaticResource PrimaryButton}"
+                                            Command="{Binding GuardarProveedorRapidoCommand}"
+                                            IsEnabled="{Binding PuedeGuardarProveedor}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconMaterial Kind="ContentSave" Width="16" Height="16" Margin="0,0,6,0"/>
+                                            <TextBlock Text="Guardar proveedor"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Detalle de items -->
+                <Border Background="White" CornerRadius="12" Padding="20" BorderBrush="{DynamicResource GridBorderBrush}" BorderThickness="1">
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Text="Detalle de items" Style="{StaticResource H3}"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Orientation="Vertical">
+                                <TextBlock Text="Producto" Style="{StaticResource Caption}"/>
+                                <DockPanel>
+                                    <ComboBox ItemsSource="{Binding Productos}"
+                                              SelectedItem="{Binding ProductoSeleccionado, Mode=TwoWay}"
+                                              DisplayMemberPath="Display"
+                                              Style="{StaticResource InputComboBox}"/>
+                                    <Button Style="{StaticResource GhostButton.Small}"
+                                            Command="{Binding MostrarProductoRapidoCommand}"
+                                            DockPanel.Dock="Right" Margin="8,0,0,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconMaterial Kind="Plus" Width="16" Height="16" Margin="0,0,6,0"/>
+                                            <TextBlock Text="Nuevo"/>
+                                        </StackPanel>
+                                    </Button>
+                                </DockPanel>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Orientation="Vertical" Margin="12,0,0,0">
+                                <TextBlock Text="Cantidad" Style="{StaticResource Caption}"/>
+                                <TextBox Style="{StaticResource InputTextBox}" Text="{Binding ProductoCantidad}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Orientation="Vertical" Margin="12,0,0,0">
+                                <TextBlock Text="Costo unitario" Style="{StaticResource Caption}"/>
+                                <TextBox Style="{StaticResource InputTextBox}" Text="{Binding ProductoCostoUnitario}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="3" Orientation="Vertical" Margin="16,0,0,0" VerticalAlignment="Bottom">
+                                <Button Style="{StaticResource PrimaryButton}" Command="{Binding AgregarDetalleCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <iconPacks:PackIconMaterial Kind="Plus" Width="16" Height="16" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Agregar"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+
+                        <DataGrid ItemsSource="{Binding Detalles}"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  Style="{StaticResource GridTable2025}"
+                                  HeadersVisibility="Column"
+                                  IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Codigo" Binding="{Binding Codigo}" Width="150"/>
+                                <DataGridTextColumn Header="Producto" Binding="{Binding Nombre}" Width="*" MinWidth="220"/>
+                                <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}" Width="120"/>
+                                <DataGridTextColumn Header="Cantidad" Binding="{Binding Cantidad}" Width="100"/>
+                                <DataGridTextColumn Header="Costo unitario" Binding="{Binding CostoUnitario, StringFormat={}{0:C2}}" Width="130"/>
+                                <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat={}{0:C2}}" Width="130"/>
+                                <DataGridTemplateColumn Header="">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Style="{StaticResource GhostButton.Small}"
+                                                    Command="{Binding DataContext.EliminarDetalleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Content="Eliminar"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="1" Orientation="Vertical" Width="220">
+                                <DockPanel LastChildFill="False">
+                                    <TextBlock Text="Subtotal" Style="{StaticResource Caption}" DockPanel.Dock="Left"/>
+                                    <TextBlock Text="{Binding Subtotal, StringFormat={}{0:C2}}" Style="{StaticResource Caption}" FontWeight="SemiBold" DockPanel.Dock="Right"/>
+                                </DockPanel>
+
+                                <DockPanel LastChildFill="False">
+                                    <TextBlock Text="Total" Style="{StaticResource Caption}" DockPanel.Dock="Left"/>
+                                    <TextBlock Text="{Binding Total, StringFormat={}{0:C2}}" Style="{StaticResource H4}" DockPanel.Dock="Right"/>
+                                </DockPanel>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Acciones -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Style="{StaticResource GhostButton.Small}" Command="{Binding VolverCommand}" Content="Volver"/>
+            <Button Style="{StaticResource GhostButton.Small}" Command="{Binding CancelarCommand}" Content="Cancelar" Margin="12,0,0,0"/>
+            <Button Style="{StaticResource PrimaryButton}" Command="{Binding GuardarCommand}" IsEnabled="{Binding PuedeGuardar}" Margin="12,0,0,0">
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial Kind="ContentSave" Width="16" Height="16" Margin="0,0,6,0"/>
+                    <TextBlock Text="Guardar"/>
+                </StackPanel>
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>
