@@ -7,10 +7,11 @@
         WindowStartupLocation="CenterScreen"
         WindowState="Maximized"
         Background="{StaticResource AppGradient}"
-        UseLayoutRounding="True" 
+        UseLayoutRounding="True"
         SnapsToDevicePixels="True">
 
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
 
         <!-- Item de menú lateral -->
         <Style x:Key="SideNavItemStyle" TargetType="ListBoxItem">
@@ -18,6 +19,7 @@
             <Setter Property="TextElement.Foreground" Value="White"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="Padding" Value="6"/>
+            <Setter Property="Margin" Value="0,2"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Template">
@@ -67,12 +69,53 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <iconPacks:PackIconMaterial Kind="{Binding IconKind}"/>
-                <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1"
+                           Text="{Binding Title}"
+                           Margin="10,0,0,0"
+                           VerticalAlignment="Center"/>
             </Grid>
         </DataTemplate>
+
+        <Style x:Key="UserMenuButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="14"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource PrimarySoftBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource PrimarySoftHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bg" Property="Opacity" Value="0.6"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
-    <!-- Layout -->
+    <!-- Layout principal -->
     <Grid Margin="18">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="260"/>
@@ -81,35 +124,147 @@
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar -->
-        <Border Grid.Column="0" CornerRadius="16" Background="{StaticResource SidebarBrush}" Padding="16">
+        <Border Grid.Column="0"
+                CornerRadius="16"
+                Background="{StaticResource SidebarBrush}"
+                Padding="16"
+                SnapsToDevicePixels="True">
             <DockPanel LastChildFill="True">
                 <StackPanel DockPanel.Dock="Top">
                     <Image Source="/Assets/tiwintza-logo.png"
-                            Width="113" Height="83" Stretch="Uniform">
+                           Width="113"
+                           Height="83"
+                           Stretch="Uniform">
                         <Image.Effect>
                             <DropShadowEffect BlurRadius="10" ShadowDepth="1" Opacity="0.45"/>
                         </Image.Effect>
                     </Image>
 
-                    <Separator Margin="0,0,0,8" Background="{StaticResource SidebarDividerBrush}"/>
+                    <TextBlock Text="Batallón Tiwintza"
+                               Foreground="White"
+                               FontWeight="SemiBold"
+                               FontSize="16"
+                               Margin="0,16,0,4"/>
+
+                    <TextBlock Text="Control de activos y existencias"
+                               Foreground="{DynamicResource MutedBrush}"
+                               FontSize="12"
+                               TextWrapping="Wrap"/>
+
+                    <Separator Margin="0,16,0,12"
+                               Background="{StaticResource SidebarDividerBrush}"/>
                 </StackPanel>
 
                 <ListBox ItemsSource="{Binding Menu}"
-                 SelectedItem="{Binding SelectedMenu, Mode=TwoWay}"
-                 ItemContainerStyle="{StaticResource SideNavItemStyle}"
-                 ItemTemplate="{StaticResource SideNavItemTemplate}"
-                 BorderThickness="0"
-                 Background="Transparent"
-                 ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                         SelectedItem="{Binding SelectedMenu, Mode=TwoWay}"
+                         ItemContainerStyle="{StaticResource SideNavItemStyle}"
+                         ItemTemplate="{StaticResource SideNavItemTemplate}"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         Margin="0,12,0,0"/>
             </DockPanel>
         </Border>
 
+        <!-- Contenido principal -->
+        <Border Grid.Column="2"
+                CornerRadius="18"
+                Background="{StaticResource CreamBrush}"
+                Padding="0"
+                SnapsToDevicePixels="True">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
+                <!-- Encabezado -->
+                <Border Grid.Row="0"
+                        Background="{StaticResource SurfaceAltBrush}"
+                        Padding="24"
+                        CornerRadius="18,18,0,0"
+                        BorderBrush="{DynamicResource GridBorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-        <!-- Contenido -->
-        <Border Grid.Column="2" CornerRadius="16" Background="{StaticResource  CreamBrush}" Padding="0">
-            <ContentControl Content="{Binding Current, 
-                  PresentationTraceSources.TraceLevel=High}"/>
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock Text="{Binding SelectedMenu.Title, TargetNullValue='Panel principal', FallbackValue='Panel principal'}"
+                                       Style="{StaticResource H2}"/>
+                            <TextBlock Text="{Binding UserAlias, TargetNullValue='Seleccione una opción del menú'}"
+                                       Style="{StaticResource Caption}"
+                                       Foreground="{DynamicResource MutedBrush}"
+                                       Margin="0,6,0,0"/>
+                        </StackPanel>
+
+                        <Button x:Name="UserMenuButton"
+                                Grid.Column="1"
+                                Style="{StaticResource UserMenuButtonStyle}"
+                                Click="UserMenuButton_OnClick"
+                                ToolTip="Opciones de usuario">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Width="40"
+                                        Height="40"
+                                        Background="{DynamicResource PrimarySoftBrush}"
+                                        CornerRadius="20">
+                                    <iconPacks:PackIconMaterial Kind="AccountCircle"
+                                                                Width="24"
+                                                                Height="24"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                Foreground="{DynamicResource PrimaryBrush}"/>
+                                </Border>
+                                <StackPanel Margin="12,0,8,0"
+                                            VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding UserDisplayName}"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource OnSurfaceBrush}"/>
+                                    <TextBlock Text="{Binding UserRoleLabel}"
+                                               Foreground="{DynamicResource MutedBrush}"
+                                               FontSize="12"/>
+                                </StackPanel>
+                                <iconPacks:PackIconMaterial Kind="ChevronDown"
+                                                            Width="18"
+                                                            Height="18"
+                                                            VerticalAlignment="Center"
+                                                            Foreground="{DynamicResource MutedBrush}"/>
+                            </StackPanel>
+                            <Button.ContextMenu>
+                                <ContextMenu Placement="Bottom">
+                                    <MenuItem Header="{Binding UserAlias, TargetNullValue='Sesión activa'}"
+                                              IsHitTestVisible="False"
+                                              FontWeight="SemiBold"/>
+                                    <Separator/>
+                                    <MenuItem Header="Gestión de usuarios"
+                                              Command="{Binding IrConfiguracionCommand}"
+                                              Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibility}}">
+                                        <MenuItem.Icon>
+                                            <iconPacks:PackIconMaterial Kind="AccountGroup" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="Cerrar sesión"
+                                              Command="{Binding LogoutCommand}">
+                                        <MenuItem.Icon>
+                                            <iconPacks:PackIconMaterial Kind="LogoutVariant" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Contenido dinámico -->
+                <Border Grid.Row="1"
+                        Padding="24"
+                        Background="Transparent"
+                        CornerRadius="0,0,18,18">
+                    <ContentControl Content="{Binding Current, PresentationTraceSources.TraceLevel=High}"/>
+                </Border>
+            </Grid>
         </Border>
     </Grid>
 </Window>

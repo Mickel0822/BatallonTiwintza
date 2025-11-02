@@ -1,4 +1,4 @@
-﻿<!-- Styles/Colors.xaml -->
+<!-- Styles/Colors.xaml -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:System="clr-namespace:System;assembly=mscorlib">
@@ -22,6 +22,12 @@
     <Color x:Key="Warning">#FFB78103</Color>
     <Color x:Key="Error">#FFB3261E</Color>
     <Color x:Key="Info">#FF0B5ED7</Color>
+
+    <!-- Status backgrounds -->
+    <Color x:Key="StatusSuccessBackground">#FFE6F4EA</Color>
+    <Color x:Key="StatusInfoBackground">#FFE6EEF8</Color>
+    <Color x:Key="StatusWarningBackground">#FFFEF3E7</Color>
+    <Color x:Key="StatusDangerBackground">#FFFDE8E4</Color>
 
     <!-- Sidebar / layout oscuro -->
     <Color x:Key="Sidebar">#FF101827</Color>
@@ -49,6 +55,11 @@
     <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource Error}"/>
     <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource Info}"/>
 
+    <SolidColorBrush x:Key="StatusSuccessBrush" Color="{StaticResource StatusSuccessBackground}"/>
+    <SolidColorBrush x:Key="StatusInfoBrush" Color="{StaticResource StatusInfoBackground}"/>
+    <SolidColorBrush x:Key="StatusWarningBrush" Color="{StaticResource StatusWarningBackground}"/>
+    <SolidColorBrush x:Key="StatusDangerBrush" Color="{StaticResource StatusDangerBackground}"/>
+
     <SolidColorBrush x:Key="SidebarBrush" Color="{StaticResource Sidebar}"/>
     <SolidColorBrush x:Key="SidebarDividerBrush" Color="{StaticResource SidebarDivider}"/>
     <SolidColorBrush x:Key="SidebarItemHoverBrush" Color="{StaticResource SidebarItemHover}"/>
@@ -58,7 +69,7 @@
     <SolidColorBrush x:Key="CardBrush" Color="{StaticResource SurfaceAlt}"/>
 
     <!-- ===== Buttons helpers (nuevos) ===== -->
-    <!-- Suave “tint” del primario para hovers de botones outline/ghost -->
+    <!-- Suave "tint" del primario para hovers de botones outline/ghost -->
     <SolidColorBrush x:Key="PrimarySoftBrush" Color="{StaticResource Primary}" Opacity="0.12"/>
     <SolidColorBrush x:Key="PrimarySoftHoverBrush" Color="{StaticResource Primary}" Opacity="0.18"/>
 

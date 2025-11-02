@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -96,6 +96,73 @@ public sealed class ExistenciasService : IExistenciasService
         }
 
         return new PagedResult<ExistenciaListItemDto>(dtos, total, page, pageSize);
+    }
+
+    public async Task<IReadOnlyList<ExistenciaExcelDto>> ExportarAsync(ExistenciaFiltro filtro, CancellationToken ct = default)
+    {
+        filtro ??= new ExistenciaFiltro();
+
+        IQueryable<Existencia> query = _db.Existencia
+            .AsNoTracking()
+            .Include(e => e.ProveedorPref);
+
+        if (!string.IsNullOrWhiteSpace(filtro.Texto))
+        {
+            var texto = filtro.Texto.Trim();
+            query = query.Where(e =>
+                EF.Functions.ILike(e.Codigo, $"%{texto}%") ||
+                EF.Functions.ILike(e.Nombre, $"%{texto}%"));
+        }
+
+        if (filtro.Nivel is { } nivel && nivel != ExistenciaNivelEstado.Desconocido)
+        {
+            query = nivel switch
+            {
+                ExistenciaNivelEstado.Critico => query.Where(e => e.StockActual <= e.NivelCritico),
+                ExistenciaNivelEstado.Bajo => query.Where(e => e.StockActual > e.NivelCritico && e.StockActual <= e.NivelMinimo),
+                ExistenciaNivelEstado.Seguro => query.Where(e => e.StockActual > e.NivelMinimo && e.StockActual <= e.NivelSeguridad),
+                ExistenciaNivelEstado.Normal => query.Where(e => e.StockActual > e.NivelSeguridad && e.StockActual <= e.NivelMaximo),
+                ExistenciaNivelEstado.Excedido => query.Where(e => e.StockActual > e.NivelMaximo),
+                _ => query
+            };
+        }
+
+        query = ApplySort(query, filtro.SortBy, filtro.SortDesc);
+
+        var items = await query
+            .Select(e => new
+            {
+                e.Codigo,
+                e.Nombre,
+                e.Unidad,
+                e.StockActual,
+                e.NivelSeguridad,
+                e.NivelMaximo,
+                e.NivelMinimo,
+                e.NivelCritico,
+                Proveedor = e.ProveedorPref != null ? e.ProveedorPref.RazonSocial : null
+            })
+            .ToListAsync(ct);
+
+        var dtos = new List<ExistenciaExcelDto>(items.Count);
+        foreach (var item in items)
+        {
+            dtos.Add(new ExistenciaExcelDto
+            {
+                Codigo = item.Codigo,
+                Nombre = item.Nombre,
+                Unidad = item.Unidad,
+                StockActual = item.StockActual,
+                NivelSeguridad = item.NivelSeguridad,
+                NivelMaximo = item.NivelMaximo,
+                NivelMinimo = item.NivelMinimo,
+                NivelCritico = item.NivelCritico,
+                NivelEstado = CalcularEstado(item.StockActual, item.NivelCritico, item.NivelMinimo, item.NivelSeguridad, item.NivelMaximo),
+                Proveedor = item.Proveedor
+            });
+        }
+
+        return dtos;
     }
 
     public async Task<ExistenciaListItemDto?> ObtenerAsync(long id, CancellationToken ct = default)

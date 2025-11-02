@@ -1,4 +1,4 @@
-锘縰sing Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -10,6 +10,10 @@ using Tiwintza.Infrastructure.Data;
 using Tiwintza.Infrastructure.Services;
 using Tiwintza.Infrastructure.Services.Auth;
 using Tiwintza.Presentation.Wpf.Services;
+using Tiwintza.Presentation.Wpf.Services.Navigation;
+using Tiwintza.Presentation.Wpf.ViewModels.Catalogos;
+using Tiwintza.Presentation.Wpf.ViewModels.Auditoria;
+using Tiwintza.Presentation.Wpf.ViewModels.Configuracion;
 using Tiwintza.Presentation.Wpf.Services.Windows;
 using Tiwintza.Presentation.Wpf.ViewModels;
 using Tiwintza.Presentation.Wpf.ViewModels.Activos;
@@ -55,14 +59,14 @@ namespace Tiwintza.Presentation.Wpf
                 })
                 .ConfigureServices((ctx, services) =>
                 {
-                    // ---- DBContext desde configuraci贸n (externa/secret/env) ----
+                    // ---- DBContext desde configuraci髇 (externa/secret/env) ----
                     var csApp = ctx.Configuration.GetConnectionString("AppDb");
                     var csMain = ctx.Configuration.GetConnectionString("MainDb");
                     var connString = !string.IsNullOrWhiteSpace(csApp) ? csApp : csMain;
 
                     if (string.IsNullOrWhiteSpace(connString))
                         throw new InvalidOperationException(
-                            $"Falta la cadena de conexi贸n 'ConnectionStrings:AppDb' (o 'MainDb'). " +
+                            $"Falta la cadena de conexi髇 'ConnectionStrings:AppDb' (o 'MainDb'). " +
                             $"Revise/edite el archivo: {ExternalConfigPath}");
 
                     services.AddDbContext<AppDbContext>(opt =>
@@ -74,10 +78,15 @@ namespace Tiwintza.Presentation.Wpf
                     services.AddScoped<IActivosCrudService, ActivosCrudService>();
                     services.AddScoped<IExistenciasService, ExistenciasService>();
                     services.AddScoped<IExistenciasCrudService, ExistenciasCrudService>();
+                    services.AddScoped<IDashboardService, DashboardService>();
+                    services.AddScoped<ICatalogosService, CatalogosService>();
+                    services.AddScoped<IAuditoriaService, AuditoriaService>();
+                    services.AddScoped<IUsuariosService, UsuariosService>();
                     // --- FIN DE SERVICIOS DE INFRASTRUCTURE  ----
 
                     // Credential storage
                     services.AddSingleton<ICredentialStorage, WindowsCredentialStorage>();
+                    services.AddSingleton<INavigationCoordinator, NavigationCoordinator>();
 
                     // ViewModels
                     services.AddTransient<LoginViewModel>();
@@ -86,6 +95,9 @@ namespace Tiwintza.Presentation.Wpf
                     services.AddTransient<ExistenciasListViewModel>();
                     services.AddTransient<ExistenciaIngresoViewModel>();
                     services.AddTransient<ExistenciaSalidaViewModel>();
+                    services.AddTransient<CatalogosViewModel>();
+                    services.AddTransient<AuditoriaViewModel>();
+                    services.AddTransient<ConfiguracionViewModel>();
 
                     services.AddTransient<Func<ExistenciaIngresoViewModel>>(sp =>
                             () => sp.GetRequiredService<ExistenciaIngresoViewModel>());
@@ -95,9 +107,14 @@ namespace Tiwintza.Presentation.Wpf
 
                     services.AddSingleton<MainViewModel>(sp =>
                         new MainViewModel(
+                            sp.GetRequiredService<INavigationCoordinator>(),
+                            sp.GetRequiredService<IAuthService>(),
                             () => sp.GetRequiredService<DashboardViewModel>(),
                             () => sp.GetRequiredService<ActivosListViewModel>(),
-                            () => sp.GetRequiredService<ExistenciasListViewModel>()));
+                            () => sp.GetRequiredService<ExistenciasListViewModel>(),
+                            () => sp.GetRequiredService<CatalogosViewModel>(),
+                            () => sp.GetRequiredService<AuditoriaViewModel>(),
+                            () => sp.GetRequiredService<ConfiguracionViewModel>()));
 
                     // Views
                     services.AddTransient<LoginWindow>();
@@ -114,13 +131,13 @@ namespace Tiwintza.Presentation.Wpf
 
             await AppHost.StartAsync();
 
-            // --- Verificaci贸n de conectividad a la BD (sin migrar) ---
+            // --- Verificaci髇 de conectividad a la BD (sin migrar) ---
             try
             {
                 using var scope = AppHost.Services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                // Abrimos/cerramos expl铆citamente para obtener errores claros
+                // Abrimos/cerramos expl韈itamente para obtener errores claros
                 await db.Database.OpenConnectionAsync();
                 await db.Database.CloseConnectionAsync();
             }
@@ -128,9 +145,9 @@ namespace Tiwintza.Presentation.Wpf
             {
                 MessageBox.Show(
                     "No se pudo conectar a la base de datos.\n\n" +
-                    $"Archivo de configuraci贸n:\n{ExternalConfigPath}\n\n" +
+                    $"Archivo de configuraci髇:\n{ExternalConfigPath}\n\n" +
                     $"Detalle:\n{ex.Message}",
-                    "Error de conexi贸n", MessageBoxButton.OK, MessageBoxImage.Error);
+                    "Error de conexi髇", MessageBoxButton.OK, MessageBoxImage.Error);
                 Shutdown(-1);
                 return;
             }
@@ -171,3 +188,6 @@ namespace Tiwintza.Presentation.Wpf
         }
     }
 }
+
+
+

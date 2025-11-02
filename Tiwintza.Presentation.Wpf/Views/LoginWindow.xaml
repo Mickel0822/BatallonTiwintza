@@ -76,10 +76,29 @@
                              diag:PresentationTraceSources.TraceLevel="High"/>
 
                     <TextBlock Text="Contraseña" FontWeight="SemiBold" Margin="0,10,0,0"/>
-                    <PasswordBox x:Name="PwdBox"
-                                 Style="{DynamicResource InputPasswordBox}"
-                                 PasswordChanged="PasswordBox_OnPasswordChanged"
+                    <Grid>
+                        <PasswordBox x:Name="PwdBox"
+                                     Style="{DynamicResource InputPasswordBox}"
+                                     Padding="10,6,44,6"
+                                     PasswordChanged="PasswordBox_OnPasswordChanged"
+                                     diag:PresentationTraceSources.TraceLevel="High"/>
+                        <TextBox x:Name="PwdPlainBox"
+                                 Style="{DynamicResource InputTextBox}"
+                                 Padding="10,6,44,6"
+                                 Text="{Binding Clave, UpdateSourceTrigger=PropertyChanged}"
+                                 Visibility="Collapsed"
+                                 TextChanged="PwdPlainBox_OnTextChanged"
                                  diag:PresentationTraceSources.TraceLevel="High"/>
+                        <ToggleButton x:Name="TogglePasswordVisibility"
+                                      Style="{DynamicResource PasswordToggleButton}"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"
+                                      Margin="0,0,6,0"
+                                      ToolTip="Mostrar contraseña"
+                                      ToolTipService.ShowDuration="4000"
+                                      Checked="TogglePasswordVisibility_OnChecked"
+                                      Unchecked="TogglePasswordVisibility_OnUnchecked"/>
+                    </Grid>
 
                     <CheckBox Content="Recordarme"
                               IsChecked="{Binding Recordarme}"

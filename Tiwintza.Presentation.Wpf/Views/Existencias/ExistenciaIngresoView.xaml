@@ -184,12 +184,12 @@
 
                             <StackPanel Grid.Column="1" Orientation="Vertical" Margin="12,0,0,0">
                                 <TextBlock Text="Cantidad" Style="{StaticResource Caption}"/>
-                                <TextBox Style="{StaticResource InputTextBox}" Text="{Binding ProductoCantidad}"/>
+                                <TextBox Style="{StaticResource InputTextBox}" Text="{Binding ProductoCantidad, UpdateSourceTrigger=PropertyChanged}"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="2" Orientation="Vertical" Margin="12,0,0,0">
                                 <TextBlock Text="Costo unitario" Style="{StaticResource Caption}"/>
-                                <TextBox Style="{StaticResource InputTextBox}" Text="{Binding ProductoCostoUnitario}"/>
+                                <TextBox Style="{StaticResource InputTextBox}" Text="{Binding ProductoCostoUnitario, UpdateSourceTrigger=PropertyChanged}"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="3" Orientation="Vertical" Margin="16,0,0,0" VerticalAlignment="Bottom">
@@ -201,6 +201,107 @@
                                 </Button>
                             </StackPanel>
                         </Grid>
+
+                        <Border Background="#F5F8FF"
+                                BorderBrush="{DynamicResource PrimaryBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="16"
+                                Margin="0,16,0,0"
+                                Visibility="{Binding IsProductoQuickAddVisible, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Vertical">
+                                <TextBlock Text="Nuevo producto" Style="{StaticResource H4}"/>
+
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,12,0">
+                                        <TextBlock Text="Codigo" Style="{StaticResource Caption}"/>
+                                        <TextBox Style="{StaticResource InputTextBox}"
+                                                 Text="{Binding NuevoProductoCodigo, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Vertical">
+                                        <TextBlock Text="Nombre" Style="{StaticResource Caption}"/>
+                                        <TextBox Style="{StaticResource InputTextBox}"
+                                                 Text="{Binding NuevoProductoNombre, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,12,0">
+                                        <TextBlock Text="Descripcion" Style="{StaticResource Caption}"/>
+                                        <TextBox Style="{StaticResource InputTextBox}"
+                                                 Text="{Binding NuevoProductoDescripcion, UpdateSourceTrigger=PropertyChanged}"
+                                                 AcceptsReturn="True"
+                                                 Height="80"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Vertical">
+                                        <TextBlock Text="Unidad" Style="{StaticResource Caption}"/>
+                                        <TextBox Style="{StaticResource InputTextBox}"
+                                                 Text="{Binding NuevoProductoUnidad, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,12,0">
+                                        <TextBlock Text="Nivel maximo" Style="{StaticResource Caption}"/>
+                                        <TextBox Style="{StaticResource InputTextBox}"
+                                                 Text="{Binding NuevoProductoNivelMaximo, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Vertical">
+                                        <TextBlock Text="Nivel seguridad" Style="{StaticResource Caption}"/>
+                                        <TextBox Style="{StaticResource InputTextBox}"
+                                                 Text="{Binding NuevoProductoNivelSeguridad, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,12,0">
+                                        <TextBlock Text="Nivel minimo" Style="{StaticResource Caption}"/>
+                                        <TextBox Style="{StaticResource InputTextBox}"
+                                                 Text="{Binding NuevoProductoNivelMinimo, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Vertical">
+                                        <TextBlock Text="Nivel critico" Style="{StaticResource Caption}"/>
+                                        <TextBox Style="{StaticResource InputTextBox}"
+                                                 Text="{Binding NuevoProductoNivelCritico, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="{Binding ProductoQuickAddError}"
+                                           Foreground="#C62828"
+                                           Margin="0,8,0,0"
+                                           Visibility="{Binding ProductoQuickAddError, Converter={StaticResource StringNullToVisibility}}"/>
+
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                                    <Button Style="{StaticResource GhostButton.Small}"
+                                            Command="{Binding CancelarProductoRapidoCommand}"
+                                            Content="Cancelar"/>
+                                    <Button Style="{StaticResource PrimaryButton}"
+                                            Command="{Binding GuardarProductoRapidoCommand}"
+                                            IsEnabled="{Binding PuedeGuardarProducto}" Margin="12,0,0,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconMaterial Kind="ContentSave" Width="16" Height="16" Margin="0,0,6,0"/>
+                                            <TextBlock Text="Guardar producto"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
 
                         <DataGrid ItemsSource="{Binding Detalles}"
                                   AutoGenerateColumns="False"

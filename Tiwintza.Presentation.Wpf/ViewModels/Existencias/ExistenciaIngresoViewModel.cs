@@ -432,6 +432,18 @@ public sealed partial class ExistenciaIngresoViewModel : ObservableValidator
         return true;
     }
 
+    partial void OnProductoSeleccionadoChanged(ExistenciaComboItemDto? value)
+    {
+        if (value is null)
+        {
+            return;
+        }
+
+        ErrorMessage = null;
+        ProductoCantidad = 1;
+        ProductoCostoUnitario = 0;
+    }
+
     partial void OnIsProveedorQuickAddBusyChanged(bool value) => OnPropertyChanged(nameof(PuedeGuardarProveedor));
     partial void OnNuevoProveedorRucChanged(string? value) => OnPropertyChanged(nameof(PuedeGuardarProveedor));
     partial void OnNuevoProveedorRazonSocialChanged(string? value) => OnPropertyChanged(nameof(PuedeGuardarProveedor));

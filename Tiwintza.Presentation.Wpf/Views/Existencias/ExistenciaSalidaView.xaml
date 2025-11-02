@@ -60,7 +60,7 @@
 
                     <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical" Margin="0,12,16,0">
                         <TextBlock Text="Cantidad" Style="{StaticResource Caption}"/>
-                        <TextBox Style="{StaticResource InputTextBox}" Text="{Binding Cantidad}"/>
+                        <TextBox Style="{StaticResource InputTextBox}" Text="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}"/>
                     </StackPanel>
 
                     <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Vertical" Margin="16,12,0,0">

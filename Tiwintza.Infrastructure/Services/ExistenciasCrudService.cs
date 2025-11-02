@@ -159,6 +159,10 @@ public sealed class ExistenciasCrudService : IExistenciasCrudService
         };
     }
 
+    /// <summary>
+    /// Registra una COMPRA (ingreso) sin tocar StockActual ni saldos por área.
+    /// Los triggers de BD actualizan stock y saldos.
+    /// </summary>
     public async Task<long> RegistrarIngresoAsync(ExistenciaIngresoCreateDto dto, CancellationToken ct = default)
     {
         if (dto is null) throw new ArgumentNullException(nameof(dto));
@@ -166,37 +170,24 @@ public sealed class ExistenciasCrudService : IExistenciasCrudService
         if (dto.Detalles is null || dto.Detalles.Count == 0)
             throw new ArgumentException("Debe agregar al menos un producto", nameof(dto));
 
-        var detalles = dto.Detalles
-            .Select(d => new ExistenciaIngresoDetalleDto
-            {
-                ExistenciaId = d.ExistenciaId,
-                Cantidad = d.Cantidad,
-                CostoUnitario = d.CostoUnitario
-            })
-            .ToList();
-
-        foreach (var det in detalles)
+        // Validaciones de ítems (no modificamos stock)
+        foreach (var det in dto.Detalles)
         {
-            if (det.ExistenciaId <= 0)
-                throw new ArgumentException("Producto inválido", nameof(dto));
-            if (det.Cantidad <= 0)
-                throw new ArgumentException("La cantidad debe ser mayor a cero", nameof(dto));
-            if (det.CostoUnitario < 0)
-                throw new ArgumentException("El costo unitario no puede ser negativo", nameof(dto));
+            if (det.ExistenciaId <= 0) throw new ArgumentException("Producto inválido", nameof(dto));
+            if (det.Cantidad <= 0) throw new ArgumentException("La cantidad debe ser mayor a cero", nameof(dto));
+            if (det.CostoUnitario < 0) throw new ArgumentException("El costo unitario no puede ser negativo", nameof(dto));
         }
 
-        var existenciaIds = detalles.Select(d => d.ExistenciaId).Distinct().ToList();
-
-        var existencias = await _db.Existencia
-            .Where(e => existenciaIds.Contains(e.Id))
-            .ToDictionaryAsync(e => e.Id, ct);
-
-        if (existencias.Count != existenciaIds.Count)
-            throw new InvalidOperationException("No se encontró alguna de las existencias seleccionadas.");
-
+        // Verificar proveedor
         var proveedorExiste = await _db.Proveedor.AnyAsync(p => p.Id == dto.ProveedorId, ct);
         if (!proveedorExiste)
             throw new InvalidOperationException("El proveedor seleccionado no existe.");
+
+        // Verificar que todas las existencias existan
+        var existenciaIds = dto.Detalles.Select(d => d.ExistenciaId).Distinct().ToList();
+        var totalExistentes = await _db.Existencia.CountAsync(e => existenciaIds.Contains(e.Id), ct);
+        if (totalExistentes != existenciaIds.Count)
+            throw new InvalidOperationException("No se encontró alguna de las existencias seleccionadas.");
 
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
 
@@ -205,21 +196,13 @@ public sealed class ExistenciasCrudService : IExistenciasCrudService
             Fecha = dto.Fecha,
             ProveedorId = dto.ProveedorId,
             NumFactura = string.IsNullOrWhiteSpace(dto.NumeroFactura) ? null : dto.NumeroFactura.Trim(),
-            Total = Math.Round(detalles.Sum(d => d.Total), 2, MidpointRounding.AwayFromZero),
+            Total = Math.Round(dto.Detalles.Sum(d => d.Total), 2, MidpointRounding.AwayFromZero),
             CreadoEn = DateTime.UtcNow
         };
 
-        _db.Compra.Add(compra);
-
-        foreach (var det in detalles)
+        // Solo insertamos detalle_compra; el TRIGGER suma al stock
+        foreach (var det in dto.Detalles)
         {
-            var existencia = existencias[det.ExistenciaId];
-            existencia.StockActual += det.Cantidad;
-            if (existencia.ProveedorPrefId is null)
-            {
-                existencia.ProveedorPrefId = dto.ProveedorId;
-            }
-
             compra.DetalleCompra.Add(new DetalleCompra
             {
                 ExistenciaId = det.ExistenciaId,
@@ -229,12 +212,18 @@ public sealed class ExistenciasCrudService : IExistenciasCrudService
             });
         }
 
+        _db.Compra.Add(compra);
+
         await _db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
 
         return compra.Id;
     }
 
+    /// <summary>
+    /// Registra una SALIDA sin tocar StockActual ni ExistenciaAreaStock.
+    /// Los triggers de BD descuentan stock y ajustan el saldo del área.
+    /// </summary>
     public async Task<long> RegistrarSalidaAsync(ExistenciaSalidaCreateDto dto, CancellationToken ct = default)
     {
         if (dto is null) throw new ArgumentNullException(nameof(dto));
@@ -242,36 +231,23 @@ public sealed class ExistenciasCrudService : IExistenciasCrudService
         if (dto.AreaId <= 0) throw new ArgumentException("Área inválida", nameof(dto));
         if (dto.Cantidad <= 0) throw new ArgumentException("La cantidad debe ser mayor a cero", nameof(dto));
 
-        var existencia = await _db.Existencia.FirstOrDefaultAsync(e => e.Id == dto.ExistenciaId, ct)
+        // Validaciones de referencia
+        var existencia = await _db.Existencia
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == dto.ExistenciaId, ct)
             ?? throw new InvalidOperationException("La existencia seleccionada no existe.");
-
-        if (existencia.StockActual < dto.Cantidad)
-            throw new InvalidOperationException("No hay stock suficiente para registrar la salida.");
 
         var areaExiste = await _db.Area.AnyAsync(a => a.Id == dto.AreaId, ct);
         if (!areaExiste)
             throw new InvalidOperationException("El área seleccionada no existe.");
 
+        // Validación de cortesía (mensaje amigable). No modifica stock.
+        if (existencia.StockActual < dto.Cantidad)
+            throw new InvalidOperationException("No hay stock suficiente para registrar la salida.");
+
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
 
-        existencia.StockActual -= dto.Cantidad;
-
-        var areaStock = await _db.ExistenciaAreaStock
-            .FirstOrDefaultAsync(x => x.ExistenciaId == dto.ExistenciaId && x.AreaId == dto.AreaId, ct);
-
-        if (areaStock is null)
-        {
-            areaStock = new ExistenciaAreaStock
-            {
-                ExistenciaId = dto.ExistenciaId,
-                AreaId = dto.AreaId,
-                StockArea = 0
-            };
-            _db.ExistenciaAreaStock.Add(areaStock);
-        }
-
-        areaStock.StockArea += dto.Cantidad;
-
+        // Solo insertamos la salida; el TRIGGER descuenta stock y actualiza existencia_area_stock
         var salida = new Salida
         {
             ExistenciaId = dto.ExistenciaId,

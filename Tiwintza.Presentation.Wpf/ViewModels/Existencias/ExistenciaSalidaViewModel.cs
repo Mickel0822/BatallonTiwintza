@@ -213,4 +213,32 @@ public sealed partial class ExistenciaSalidaViewModel : ObservableValidator
             ErrorMessage = ex.Message;
         }
     }
+
+    partial void OnExistenciaIdChanged(long? value)
+    {
+        ValidateProperty(value, nameof(ExistenciaId));
+        OnPropertyChanged(nameof(PuedeGuardar));
+    }
+
+    partial void OnAreaIdChanged(long? value)
+    {
+        ValidateProperty(value, nameof(AreaId));
+        OnPropertyChanged(nameof(PuedeGuardar));
+    }
+
+    partial void OnCantidadChanged(int value)
+    {
+        ValidateProperty(value, nameof(Cantidad));
+        OnPropertyChanged(nameof(PuedeGuardar));
+    }
+
+    partial void OnFechaChanged(DateTime? value)
+    {
+        ValidateProperty(value, nameof(Fecha));
+        OnPropertyChanged(nameof(PuedeGuardar));
+    }
+
+    partial void OnIsBusyChanged(bool value)
+        => OnPropertyChanged(nameof(PuedeGuardar));
+
 }
