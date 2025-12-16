@@ -9,7 +9,7 @@
   <Identity
     Name="dd53192c-8e25-4b33-8f25-2570ded37171"
     Publisher="CN=Tiwintza"
-    Version="1.0.5.0" />
+    Version="1.0.6.0" />
 
   <Properties>
     <DisplayName>Control de Activos - Tiwintza</DisplayName>

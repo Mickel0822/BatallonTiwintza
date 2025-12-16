@@ -4,6 +4,7 @@
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Auditoria"
              mc:Ignorable="d"
              d:DesignHeight="720"
              d:DesignWidth="1200">
@@ -60,44 +61,59 @@
         <Border Grid.Row="1" Margin="24,0,24,24" Style="{StaticResource Card}" Padding="24">
             <Grid>
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
+                <!-- Rango de fechas -->
                 <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,12">
-                    <TextBlock Text="Fecha inicio" Style="{StaticResource FilterLabel}"/>
-                    <DatePicker SelectedDate="{Binding FechaInicio}"/>
+                    <TextBlock Text="Desde" Style="{StaticResource FilterLabel}"/>
+                    <DatePicker SelectedDate="{Binding FechaInicio}" Width="140"/>
                 </StackPanel>
                 <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,12,12">
-                    <TextBlock Text="Fecha fin" Style="{StaticResource FilterLabel}"/>
-                    <DatePicker SelectedDate="{Binding FechaFin}"/>
-                </StackPanel>
-                <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,12,12">
-                    <TextBlock Text="Usuario" Style="{StaticResource FilterLabel}"/>
-                    <ComboBox ItemsSource="{Binding Usuarios}" SelectedItem="{Binding UsuarioSeleccionado}"/>
-                </StackPanel>
-                <StackPanel Grid.Row="0" Grid.Column="3" Margin="0,0,0,12">
-                    <TextBlock Text="Entidad" Style="{StaticResource FilterLabel}"/>
-                    <ComboBox ItemsSource="{Binding Entidades}" SelectedItem="{Binding EntidadSeleccionada}"/>
+                    <TextBlock Text="Hasta" Style="{StaticResource FilterLabel}"/>
+                    <DatePicker SelectedDate="{Binding FechaFin}" Width="140"/>
                 </StackPanel>
 
-                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,12,0">
-                    <TextBlock Text="Accion" Style="{StaticResource FilterLabel}"/>
-                    <ComboBox ItemsSource="{Binding Acciones}" SelectedItem="{Binding AccionSeleccionada}"/>
+                <!-- Filtros de selección -->
+                <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,12,12">
+                    <TextBlock Text="Usuario" Style="{StaticResource FilterLabel}"/>
+                    <ComboBox ItemsSource="{Binding Usuarios}" SelectedItem="{Binding UsuarioSeleccionado}" DisplayMemberPath="Display"/>
                 </StackPanel>
-                <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,12,0">
-                    <TextBlock Text="Buscar" Style="{StaticResource FilterLabel}"/>
-                    <TextBox Text="{Binding Texto, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBox}" Tag="ID o resumen"/>
+                <StackPanel Grid.Row="0" Grid.Column="3" Margin="0,0,12,12">
+                    <TextBlock Text="Entidad" Style="{StaticResource FilterLabel}"/>
+                    <ComboBox ItemsSource="{Binding Entidades}" SelectedItem="{Binding EntidadSeleccionada}" DisplayMemberPath="Display"/>
                 </StackPanel>
-                <StackPanel Grid.Row="1" Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-                    <Button Content="Filtrar" Style="{StaticResource PrimaryButton}" Command="{Binding BuscarCommand}" Margin="0,0,8,0"/>
-                    <Button Content="Limpiar" Style="{StaticResource OutlineButton}" Command="{Binding LimpiarFiltrosCommand}"/>
+                <StackPanel Grid.Row="0" Grid.Column="4" Margin="0,0,12,12">
+                    <TextBlock Text="Acción" Style="{StaticResource FilterLabel}"/>
+                    <ComboBox ItemsSource="{Binding Acciones}" SelectedItem="{Binding AccionSeleccionada}" DisplayMemberPath="Display"/>
+                </StackPanel>
+
+                <!-- Búsqueda y Botón -->
+                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5" Margin="0,0,12,0">
+                    <TextBlock Text="Buscar por ID o resumen" Style="{StaticResource FilterLabel}"/>
+                    <TextBox Text="{Binding Texto, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBox}">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding BuscarCommand}"/>
+                        </TextBox.InputBindings>
+                    </TextBox>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Grid.Column="5" VerticalAlignment="Bottom">
+                    <Button Style="{StaticResource PrimaryButton}" Command="{Binding BuscarCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="Magnify" Width="16" Height="16" Margin="0,0,8,0"/>
+                            <TextBlock Text="Buscar"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
@@ -123,28 +139,69 @@
                         <Button Content="Exportar" Style="{StaticResource OutlineButton}" Command="{Binding ExportarCommand}" HorizontalAlignment="Right"/>
                     </DockPanel>
 
-                    <DataGrid Grid.Row="1"
-                              ItemsSource="{Binding Items}"
-                              Sorting="OnSorting"
-                              SelectedItem="{Binding Seleccionado, Mode=TwoWay}"
-                              Style="{StaticResource AuditoriaDataGrid}">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Fecha" Binding="{Binding FechaTexto}" Width="180" SortMemberPath="fecha"/>
-                            <DataGridTextColumn Header="Usuario" Binding="{Binding Usuario}" Width="160" SortMemberPath="usuario"/>
-                            <DataGridTemplateColumn Header="Accion" Width="140" SortMemberPath="accion">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Border Style="{StaticResource AccionChip}">
-                                            <TextBlock Text="{Binding Accion}" Style="{StaticResource Caption}"/>
+                    <TreeView Grid.Row="1" 
+                              ItemsSource="{Binding Items}" 
+                              BorderThickness="0" 
+                              Background="Transparent">
+                        <TreeView.Resources>
+                            <HierarchicalDataTemplate DataType="{x:Type vm:AuditGroupItemViewModel}" ItemsSource="{Binding Detalles}">
+                                <Border Padding="8,6" Background="Transparent" CornerRadius="4" Margin="0,2">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Background="{StaticResource PrimaryBrush}" CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding AccionUsuario}" Value="">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding AccionUsuario}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding AccionUsuario}" Foreground="White" FontWeight="SemiBold" FontSize="12"/>
                                         </Border>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="Entidad" Binding="{Binding Entidad}" Width="160" SortMemberPath="entidad"/>
-                            <DataGridTextColumn Header="ID" Binding="{Binding EntidadId}" Width="100" SortMemberPath="id"/>
-                            <DataGridTextColumn Header="Resumen" Binding="{Binding Resumen}" Width="*" SortMemberPath="resumen"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
+                                        <TextBlock Text="{Binding FechaHora, StringFormat='dd/MM/yyyy HH:mm'}" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <TextBlock Text="•" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <TextBlock Text="{Binding Usuario}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding TotalOperaciones, StringFormat='({0} operaciones)'}" Margin="8,0,0,0" Foreground="{StaticResource MutedBrush}" FontStyle="Italic" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </HierarchicalDataTemplate>
+
+                            <DataTemplate DataType="{x:Type vm:AuditoriaItemModel}">
+                                <Button Command="{Binding DataContext.SeleccionarCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource GhostButton}" 
+                                        HorizontalContentAlignment="Stretch"
+                                        Padding="4,4" Margin="0,1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="110"/>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <Border Grid.Column="0" Style="{StaticResource AccionChip}" HorizontalAlignment="Left" Margin="0,0,8,0">
+                                             <TextBlock Text="{Binding Accion}" Style="{StaticResource Caption}" Foreground="White" FontSize="11"/>
+                                        </Border>
+                                        
+                                        <TextBlock Grid.Column="1" Text="{Binding Entidad}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="Medium"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding Resumen}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Foreground="{StaticResource MutedBrush}"/>
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </TreeView.Resources>
+                        
+                        <TreeView.ItemContainerStyle>
+                            <Style TargetType="TreeViewItem">
+                                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                                <Setter Property="Padding" Value="2"/>
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            </Style>
+                        </TreeView.ItemContainerStyle>
+                    </TreeView>
                 </Grid>
             </Border>
 
@@ -170,56 +227,106 @@
             <TextBlock Text="{Binding Total, StringFormat='Total: {0} registros'}" Style="{StaticResource Caption}" VerticalAlignment="Center"/>
         </DockPanel>
 
-        <!-- Notificacion -->
-        <Grid Panel.ZIndex="20" Grid.RowSpan="4">
-            <Grid.Style>
-                <Style TargetType="Grid">
-                    <Setter Property="Visibility" Value="Collapsed"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsNotifyOpen}" Value="True">
-                            <Setter Property="Visibility" Value="Visible"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Grid.Style>
-            <Rectangle Fill="#80000000"/>
-            <Border Width="420" Padding="24" Background="White" CornerRadius="12" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <iconPacks:PackIconMaterial Width="28" Height="28">
-                            <iconPacks:PackIconMaterial.Style>
-                                <Style TargetType="iconPacks:PackIconMaterial">
-                                    <Setter Property="Kind" Value="CheckCircleOutline"/>
-                                    <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding NotifyIsError}" Value="True">
-                                            <Setter Property="Kind" Value="AlertCircleOutline"/>
-                                            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </iconPacks:PackIconMaterial.Style>
-                        </iconPacks:PackIconMaterial>
-                        <TextBlock Text="{Binding NotifyTitle}" Margin="8,0,0,0">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock" BasedOn="{StaticResource H3}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding NotifyIsError}" Value="True">
-                                            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </StackPanel>
-                    <TextBlock Text="{Binding NotifyMessage}" Style="{StaticResource Body}"/>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-                        <Button Content="Aceptar" Command="{Binding CerrarNotificacionCommand}" Style="{StaticResource PrimaryButton}" Padding="16,6"/>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-        </Grid>
-
+        <!-- Notificacion -->
+
+        <Grid Panel.ZIndex="20" Grid.RowSpan="4">
+
+            <Grid.Style>
+
+                <Style TargetType="Grid">
+
+                    <Setter Property="Visibility" Value="Collapsed"/>
+
+                    <Style.Triggers>
+
+                        <DataTrigger Binding="{Binding IsNotifyOpen}" Value="True">
+
+                            <Setter Property="Visibility" Value="Visible"/>
+
+                        </DataTrigger>
+
+                    </Style.Triggers>
+
+                </Style>
+
+            </Grid.Style>
+
+            <Rectangle Fill="#80000000"/>
+
+            <Border Width="420" Padding="24" Background="White" CornerRadius="12" HorizontalAlignment="Center" VerticalAlignment="Center">
+
+                <StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+
+                        <iconPacks:PackIconMaterial Width="28" Height="28">
+
+                            <iconPacks:PackIconMaterial.Style>
+
+                                <Style TargetType="iconPacks:PackIconMaterial">
+
+                                    <Setter Property="Kind" Value="CheckCircleOutline"/>
+
+                                    <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/>
+
+                                    <Style.Triggers>
+
+                                        <DataTrigger Binding="{Binding NotifyIsError}" Value="True">
+
+                                            <Setter Property="Kind" Value="AlertCircleOutline"/>
+
+                                            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/>
+
+                                        </DataTrigger>
+
+                                    </Style.Triggers>
+
+                                </Style>
+
+                            </iconPacks:PackIconMaterial.Style>
+
+                        </iconPacks:PackIconMaterial>
+
+                        <TextBlock Text="{Binding NotifyTitle}" Margin="8,0,0,0">
+
+                            <TextBlock.Style>
+
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource H3}">
+
+                                    <Style.Triggers>
+
+                                        <DataTrigger Binding="{Binding NotifyIsError}" Value="True">
+
+                                            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/>
+
+                                        </DataTrigger>
+
+                                    </Style.Triggers>
+
+                                </Style>
+
+                            </TextBlock.Style>
+
+                        </TextBlock>
+
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding NotifyMessage}" Style="{StaticResource Body}"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+
+                        <Button Content="Aceptar" Command="{Binding CerrarNotificacionCommand}" Style="{StaticResource PrimaryButton}" Padding="16,6"/>
+
+                    </StackPanel>
+
+                </StackPanel>
+
+            </Border>
+
+        </Grid>
+
+
+
     </Grid>
 </UserControl>
 

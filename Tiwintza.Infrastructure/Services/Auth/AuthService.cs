@@ -1,125 +1,112 @@
-﻿using Microsoft.EntityFrameworkCore;
+using BCrypt.Net;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Tiwintza.Infrastructure.Common;
 using Tiwintza.Infrastructure.Data;
 using Tiwintza.Infrastructure.Data.Models;
 
-namespace Tiwintza.Infrastructure.Services.Auth
+namespace Tiwintza.Infrastructure.Services.Auth;
+
+public sealed class AuthService : IAuthService
 {
-    public sealed class AuthService : IAuthService
+    private readonly IDbContextFactory<AppDbContext> _dbFactory;
+    private readonly IAppUserAccessor _userAccessor;
+    private readonly ILogger<AuthService> _logger;
+
+    public UserSession? Current { get; private set; }
+
+    public AuthService(
+        IDbContextFactory<AppDbContext> dbFactory,
+        IAppUserAccessor userAccessor,
+        ILogger<AuthService> logger)
     {
-        private readonly AppDbContext _db;
-        private readonly ILogger<AuthService>? _logger;
+        _dbFactory = dbFactory;
+        _userAccessor = userAccessor;
+        _logger = logger;
+    }
 
-        private const int MaxFallos = 5;
-        private static readonly TimeSpan Lockout = TimeSpan.FromMinutes(5);
-
-        // BCrypt “dummy” para igualar tiempos cuando el usuario no existe/bloqueado/inactivo
-        private const string DummyHash = "$2a$11$ABCDEFGHIJKLMNOPQRSTUV/2tP8yYQnR5m5jE0c7wF3xZ0YtQwJe";
-
-        public UserSession? Current { get; private set; }
-
-        public AuthService(AppDbContext db, ILogger<AuthService>? logger = null)
+    public async Task<bool> LoginAsync(string username, string password, bool rememberMe = false, CancellationToken ct = default)
+    {
+        try
         {
-            _db = db;
-            _logger = logger;
-        }
+            using var db = await _dbFactory.CreateDbContextAsync(ct);
 
-        public async Task<bool> LoginAsync(string userOrEmail, string password, bool rememberMe = false, CancellationToken ct = default)
-        {
-            // username o email (case-insensitive con ILIKE de PostgreSQL)
-            var user = await _db.Usuario
-                .Include(u => u.Rol) // 👈 TU navegación real
-                .SingleOrDefaultAsync(u =>
-                    EF.Functions.ILike(u.Username, userOrEmail) ||
-                    (u.Email != null && EF.Functions.ILike(u.Email!, userOrEmail)), ct);
+            var user = await db.Usuario
+                .Include(u => u.Rol)
+                .Include(u => u.UsuarioSede)
+                    .ThenInclude(us => us.Sede)
+                .FirstOrDefaultAsync(u => u.Username == username || u.Email == username, ct);
 
-            if (user is null)
+            if (user == null)
             {
-                _ = BCrypt.Net.BCrypt.Verify(password, DummyHash); // timing-safe
-                await AuditAsync(null, false, "Usuario no existe", ct);
-                return false;
-            }
-
-            // Nota: en tu modelo LockoutEnd es DateTime? (no Offset); usamos UtcNow para coherencia
-            if (user.LockoutEnd != null && user.LockoutEnd > DateTime.UtcNow)
-            {
-                _ = BCrypt.Net.BCrypt.Verify(password, DummyHash);
-                await AuditAsync(user.Id, false, "Usuario bloqueado temporalmente", ct);
+                _logger.LogWarning("Login fallido: usuario no encontrado {Username}", username);
                 return false;
             }
 
             if (!user.IsActive)
             {
-                _ = BCrypt.Net.BCrypt.Verify(password, DummyHash);
-                await AuditAsync(user.Id, false, "Usuario inactivo", ct);
-                return false;
+                 _logger.LogWarning("Login fallido: usuario inactivo {Username}", username);
+                 return false;
             }
-
-            var ok = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
-            if (!ok)
+            
+            // Check lockout
+            if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
             {
-                user.FailedAttempts++;
-                if (user.FailedAttempts >= MaxFallos)
-                {
-                    user.LockoutEnd = DateTime.UtcNow.Add(Lockout);
-                    user.FailedAttempts = 0;
-                }
-                await _db.SaveChangesAsync(ct);
-                await AuditAsync(user.Id, false, "Password incorrecto", ct);
+                 _logger.LogWarning("Login fallido: usuario bloqueado {Username}", username);
+                 return false;
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            {
+                // Handle failed attempts logic if needed
+                _logger.LogWarning("Login fallido: password incorrecto {Username}", username);
                 return false;
             }
 
-            // Éxito
+            // Login success
+            user.LastLogin = DateTime.UtcNow;
             user.FailedAttempts = 0;
             user.LockoutEnd = null;
-            user.LastLogin = DateTime.UtcNow;
+            await db.SaveChangesAsync(ct);
 
-            // (Opcional) rehash oportunista si subes el factor de trabajo
-            // if (BCrypt.Net.BCrypt.PasswordNeedsRehash(user.PasswordHash, workFactor: 12)) {
-            //     user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12);
-            // }
+            var roles = user.Rol.Select(r => r.Nombre).ToArray();
+            
+            var sedes = new List<SedeTenant>();
+            if (user.UsuarioSede != null)
+            {
+                foreach(var us in user.UsuarioSede)
+                {
+                    if (us.Sede != null)
+                    {
+                        sedes.Add(new SedeTenant(us.SedeId, us.Sede.Clave, us.Sede.Nombre));
+                    }
+                }
+            }
 
-            await _db.SaveChangesAsync(ct);
+            Current = new UserSession(user.Id, user.Username, user.NombreCompleto, roles, user.AreaId, sedes);
+            
+            var isAdmin = roles.Any(r => r.Equals("admin", StringComparison.OrdinalIgnoreCase) || r.Equals("administrador", StringComparison.OrdinalIgnoreCase));
+            _userAccessor.Set(user.Username, isAdmin);
 
-            // 👇 Tu colección real de roles
-            var roles = (user.Rol ?? new System.Collections.Generic.List<Rol>())
-                        .Select(r => r.Nombre)
-                        .ToArray();
-
-            // Reutiliza tu tipo UserSession
-            Current = new UserSession(user.Id, user.Username, user.NombreCompleto, roles, user.AreaId);
-
-            await AuditAsync(user.Id, true, null, ct);
+            _logger.LogInformation("Login exitoso {Username}", username);
             return true;
         }
-
-        public Task LogoutAsync(CancellationToken ct = default)
+        catch (Exception ex)
         {
-            Current = null;
-            return Task.CompletedTask;
+            _logger.LogError(ex, "Error en LoginAsync");
+            return false;
         }
+    }
 
-        private async Task AuditAsync(Guid? userId, bool exito, string? detalle, CancellationToken ct)
-        {
-            try
-            {
-                _db.LoginAuditoria.Add(new LoginAuditoria
-                {
-                    UsuarioId = userId,
-                    Exito = exito,
-                    Detalle = detalle,
-                    FechaHora = DateTime.UtcNow
-                });
-                await _db.SaveChangesAsync(ct);
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogWarning(ex, "Fallo auditoría de login");
-            }
-        }
+    public Task LogoutAsync(CancellationToken ct = default)
+    {
+        Current = null;
+        _userAccessor.Clear();
+        return Task.CompletedTask;
     }
 }

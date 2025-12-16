@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Tiwintza.Infrastructure.Common;
 using Tiwintza.Infrastructure.Services.Auth;
 using Tiwintza.Presentation.Wpf.Models;
 using Tiwintza.Presentation.Wpf.Services.Navigation;
@@ -19,6 +20,7 @@ public partial class MainViewModel : ObservableObject
 {
     private readonly INavigationCoordinator _navigator;
     private readonly IAuthService _auth;
+    private readonly ITenantAccessor _tenantAccessor;
     private readonly Func<DashboardViewModel> _dashboardFactory;
     private readonly Func<ActivosListViewModel> _activosFactory;
     private readonly Func<ExistenciasListViewModel> _existenciasFactory;
@@ -36,6 +38,12 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string? userDisplayName;
     [ObservableProperty] private string? userAlias;
     [ObservableProperty] private string? userRoleLabel;
+    [ObservableProperty] private string? sedeActualNombre;
+
+    [ObservableProperty] private bool isSedeSelectorOpen;
+    [ObservableProperty] private IReadOnlyList<SedeTenant>? sedesDisponibles;
+    [ObservableProperty] private SedeTenant? sedeSeleccionada;
+    [ObservableProperty] private string? cambioSedeMensaje;
 
     public bool IsAdmin { get; private set; }
 
@@ -45,6 +53,7 @@ public partial class MainViewModel : ObservableObject
 
     public MainViewModel(INavigationCoordinator navigator,
                          IAuthService auth,
+                         ITenantAccessor tenantAccessor,
                          Func<DashboardViewModel> dashboardFactory,
                          Func<ActivosListViewModel> activosFactory,
                          Func<ExistenciasListViewModel> existenciasFactory,
@@ -56,6 +65,7 @@ public partial class MainViewModel : ObservableObject
         _navigator.NavigationRequested += OnNavigationRequested;
 
         _auth = auth;
+        _tenantAccessor = tenantAccessor;
         _dashboardFactory = dashboardFactory;
         _activosFactory = activosFactory;
         _existenciasFactory = existenciasFactory;
@@ -92,8 +102,59 @@ public partial class MainViewModel : ObservableObject
     private async Task LogoutAsync()
     {
         await _auth.LogoutAsync();
+        _tenantAccessor.Clear();
+        CancelarCambioSede();
         LogoutRequested?.Invoke();
     }
+
+    [RelayCommand]
+    private void MostrarSelectorSede()
+    {
+        if (!IsAdmin)
+        {
+            CambioSedeMensaje = "Solo los administradores pueden cambiar de sede.";
+            IsSedeSelectorOpen = true;
+            return;
+        }
+
+        var session = _auth.Current;
+        var sedes = session?.Sedes;
+        if (sedes is null || sedes.Count == 0)
+        {
+            CambioSedeMensaje = "No hay sedes disponibles.";
+            SedesDisponibles = Array.Empty<SedeTenant>();
+            SedeSeleccionada = null;
+            IsSedeSelectorOpen = true;
+            ConfirmarCambioSedeCommand.NotifyCanExecuteChanged();
+            return;
+        }
+
+        SedesDisponibles = sedes;
+        SedeSeleccionada = sedes.FirstOrDefault();
+        CambioSedeMensaje = null;
+        IsSedeSelectorOpen = true;
+        ConfirmarCambioSedeCommand.NotifyCanExecuteChanged();
+    }
+
+    [RelayCommand]
+    private void CancelarCambioSede()
+    {
+        IsSedeSelectorOpen = false;
+        CambioSedeMensaje = null;
+        SedesDisponibles = null;
+        SedeSeleccionada = null;
+        ConfirmarCambioSedeCommand.NotifyCanExecuteChanged();
+    }
+
+    [RelayCommand(CanExecute = nameof(PuedeConfirmarCambioSede))]
+    private void ConfirmarCambioSede()
+    {
+        if (SedeSeleccionada is null) return;
+        CambiarSede(SedeSeleccionada);
+        CancelarCambioSede();
+    }
+
+    private bool PuedeConfirmarCambioSede() => IsSedeSelectorOpen && SedeSeleccionada is not null;
 
     private void InitializeSessionState(UserSession? session)
     {
@@ -118,15 +179,16 @@ public partial class MainViewModel : ObservableObject
         _menuItems.Add(new NavigationItem("dashboard", "Dashboard", "ViewDashboardOutline"));
         _menuItems.Add(new NavigationItem("activos", "Activos", "Briefcase"));
         _menuItems.Add(new NavigationItem("existencias", "Existencias", "Warehouse"));
-        _menuItems.Add(new NavigationItem("reportes", "Reportes", "FileDocumentOutline"));
         _menuItems.Add(new NavigationItem("catalogos", "Catálogos", "TableCog"));
-        _menuItems.Add(new NavigationItem("auditoria", "Auditoría", "FileSearchOutline"));
+        
         if (IsAdmin)
         {
+            _menuItems.Add(new NavigationItem("auditoria", "Auditoría", "FileSearchOutline"));
             _menuItems.Add(new NavigationItem("config", "Configuración", "CogOutline"));
         }
 
         OnPropertyChanged(nameof(Menu));
+        ActualizarSedeActual();
     }
 
     private object ResolveViewModel(string key)
@@ -203,11 +265,23 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    private void ActualizarSedeActual() => SedeActualNombre = _tenantAccessor.Current?.Nombre;
+
+    private void CambiarSede(SedeTenant sede)
+    {
+        _tenantAccessor.Set(sede);
+        _cache.Clear();
+        ActualizarSedeActual();
+        if (Menu.Count > 0)
+        {
+            SelectedMenu = Menu[0];
+        }
+    }
+
+    partial void OnIsSedeSelectorOpenChanged(bool value) => ConfirmarCambioSedeCommand.NotifyCanExecuteChanged();
+    partial void OnSedeSeleccionadaChanged(SedeTenant? value) => ConfirmarCambioSedeCommand.NotifyCanExecuteChanged();
+
     private static bool IsAdminRole(string role) =>
         role.Equals("administrador", StringComparison.OrdinalIgnoreCase) ||
         role.Equals("admin", StringComparison.OrdinalIgnoreCase);
 }
-
-
-
-

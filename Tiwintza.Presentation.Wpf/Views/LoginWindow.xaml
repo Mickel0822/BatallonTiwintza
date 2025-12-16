@@ -2,14 +2,17 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:diag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
+        xmlns:conv="clr-namespace:Tiwintza.Presentation.Wpf.Converters"
         Title="Iniciar sesión - Control de Activos"
         Height="600" Width="980"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
         Background="{DynamicResource AppGradient}"
         diag:PresentationTraceSources.TraceLevel="High">
-    
-    
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+    </Window.Resources>
 
     <Grid Margin="36" diag:PresentationTraceSources.TraceLevel="High">
         <Grid.ColumnDefinitions>
@@ -123,6 +126,42 @@
                 <TextBlock Grid.Row="2"
                            Text="¿Olvidaste tu contraseña? Contacta a Sistemas"
                            Style="{DynamicResource Caption}" HorizontalAlignment="Right"/>
+            </Grid>
+        </Border>
+
+        <Border Grid.ColumnSpan="2"
+                Background="#AA0F172A"
+                Visibility="{Binding RequiereSeleccionSede, Converter={StaticResource BoolToVisibility}}"
+                Panel.ZIndex="10">
+            <Grid>
+                <Border Background="{DynamicResource SurfaceAltBrush}"
+                        CornerRadius="12"
+                        Padding="32"
+                        Width="420"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                    <StackPanel>
+                        <TextBlock Text="Selecciona la sede"
+                                   Style="{StaticResource H3}"/>
+                        <TextBlock Text="Elige la sede con la que deseas trabajar."
+                                   Style="{StaticResource Caption}"
+                                   Margin="0,4,0,16"/>
+                        <ComboBox ItemsSource="{Binding SedesDisponibles}"
+                                  DisplayMemberPath="Nombre"
+                                  SelectedItem="{Binding SedeSeleccionada}"
+                                  Margin="0,0,0,12"/>
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Right">
+                            <Button Content="Cancelar"
+                                    Margin="0,0,12,0"
+                                    Style="{DynamicResource GhostButton}"
+                                    Command="{Binding CancelarSeleccionSedeCommand}"/>
+                            <Button Content="Continuar"
+                                    Style="{DynamicResource PrimaryButton}"
+                                    Command="{Binding ConfirmarSedeCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
             </Grid>
         </Border>
     </Grid>

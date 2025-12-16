@@ -63,8 +63,8 @@ public sealed partial class ExistenciaIngresoViewModel : ObservableValidator
     private DateTime? fecha;
 
     [ObservableProperty] private ExistenciaComboItemDto? productoSeleccionado;
-    [ObservableProperty] private int productoCantidad = 1;
-    [ObservableProperty] private decimal productoCostoUnitario;
+    [ObservableProperty] private int? productoCantidad = 1;
+    [ObservableProperty] private decimal? productoCostoUnitario;
 
     [ObservableProperty] private bool isProveedorQuickAddVisible;
     [ObservableProperty] private bool isProveedorQuickAddBusy;
@@ -147,13 +147,17 @@ public sealed partial class ExistenciaIngresoViewModel : ObservableValidator
             return;
         }
 
-        if (ProductoCantidad <= 0)
+        // Usamos '?? 0' para convertir nulo a cero de forma segura
+        var cantidad = ProductoCantidad ?? 0;
+        var costo = ProductoCostoUnitario ?? 0;
+
+        if (cantidad <= 0)
         {
             ErrorMessage = "La cantidad debe ser mayor a cero";
             return;
         }
 
-        if (ProductoCostoUnitario < 0)
+        if (costo < 0)
         {
             ErrorMessage = "El costo unitario no puede ser negativo";
             return;
@@ -162,17 +166,19 @@ public sealed partial class ExistenciaIngresoViewModel : ObservableValidator
         var existente = Detalles.FirstOrDefault(d => d.ExistenciaId == ProductoSeleccionado.Id);
         if (existente is not null)
         {
-            existente.Cantidad += ProductoCantidad;
-            existente.CostoUnitario = ProductoCostoUnitario;
+            existente.Cantidad += cantidad;
+            existente.CostoUnitario = costo;
         }
         else
         {
+            // Pasamos las variables locales 'cantidad' y 'costo'
             var detalle = new IngresoDetalleItem(ProductoSeleccionado.Id,
                                                  ProductoSeleccionado.Codigo,
                                                  ProductoSeleccionado.Nombre,
                                                  ProductoSeleccionado.Unidad,
-                                                 ProductoCantidad,
-                                                 ProductoCostoUnitario);
+                                                 cantidad,
+                                                 costo);
+
             detalle.PropertyChanged += (_, __) =>
             {
                 OnPropertyChanged(nameof(Subtotal));
@@ -210,6 +216,8 @@ public sealed partial class ExistenciaIngresoViewModel : ObservableValidator
     [RelayCommand]
     private async Task GuardarAsync()
     {
+        if (IsBusy) return;
+
         ErrorMessage = null;
         ValidateAllProperties();
         OnPropertyChanged(nameof(PuedeGuardar));

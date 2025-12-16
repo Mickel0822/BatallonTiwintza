@@ -1,78 +1,68 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Win32;
-using ClosedXML.Excel;
+using Tiwintza.Infrastructure.Common;
 using Tiwintza.Infrastructure.Dtos.Existencias;
 using Tiwintza.Infrastructure.Services;
+using ClosedXML.Excel;
+using Microsoft.Win32;
 
 namespace Tiwintza.Presentation.Wpf.ViewModels.Existencias;
 
 public sealed partial class ExistenciasListViewModel : ObservableObject
 {
-    private readonly IExistenciasService _svc;
-    private readonly Func<ExistenciaIngresoViewModel> _ingresoFactory;
-    private readonly Func<ExistenciaSalidaViewModel> _salidaFactory;
+    private readonly IExistenciasService _service;
+    private readonly IExistenciasCrudService _crudService;
+    private bool _initialized;
 
-    private bool _inited;
-
-    public ExistenciasListViewModel(IExistenciasService svc,
-                                    Func<ExistenciaIngresoViewModel> ingresoFactory,
-                                    Func<ExistenciaSalidaViewModel> salidaFactory)
+    public ExistenciasListViewModel(IExistenciasService service, IExistenciasCrudService crudService)
     {
-        _svc = svc;
-        _ingresoFactory = ingresoFactory;
-        _salidaFactory = salidaFactory;
-
+        _service = service;
+        _crudService = crudService;
         Items = new ObservableCollection<ExistenciaListItemDto>();
-
-        NivelOpciones = new ReadOnlyCollection<NivelOption>(new[]
-        {
-            new NivelOption("Todos", null),
-            new NivelOption("Cr韙ico", ExistenciaNivelEstado.Critico),
-            new NivelOption("Bajo", ExistenciaNivelEstado.Bajo),
-            new NivelOption("Seguro", ExistenciaNivelEstado.Seguro),
-            new NivelOption("Normal", ExistenciaNivelEstado.Normal),
-            new NivelOption("Excedido", ExistenciaNivelEstado.Excedido)
-        });
-
-        NivelSeleccionado = NivelOpciones.First();
     }
 
     public ObservableCollection<ExistenciaListItemDto> Items { get; }
 
-    public IReadOnlyList<NivelOption> NivelOpciones { get; }
-
     [ObservableProperty] private bool isBusy;
-    [ObservableProperty] private bool isInForm;
-    [ObservableProperty] private object? formVm;
     [ObservableProperty] private string? errorMessage;
-
-    [ObservableProperty] private string? notifyTitle;
-    [ObservableProperty] private string? notifyMessage;
-    [ObservableProperty] private bool isNotifyOpen;
-
-    [ObservableProperty] private string? texto;
-    [ObservableProperty] private NivelOption? nivelSeleccionado;
-
+    [ObservableProperty] private string? textoBusqueda;
     [ObservableProperty] private int page = 1;
-    [ObservableProperty] private int pageSize = 30;
+    [ObservableProperty] private int pageSize = 25;
     [ObservableProperty] private int total;
+    
+    // Filtros adicionales
+    [ObservableProperty] private ExistenciaNivelEstado? nivelSeleccionado;
+    
+    public ObservableCollection<NivelOption> NivelOpciones { get; } = new()
+    {
+        new(null, "Todos"),
+        new(ExistenciaNivelEstado.Seguro, "Seguro"),
+        new(ExistenciaNivelEstado.Bajo, "Bajo"),
+        new(ExistenciaNivelEstado.Critico, "Critico"),
+        new(ExistenciaNivelEstado.Excedido, "Excedido")
+    };
+
+    // Orquestaci贸n de formularios
+    [ObservableProperty] private object? formVm;
+    [ObservableProperty] private bool isInForm;
 
     public int PageCount => PageSize <= 0 ? 1 : Math.Max(1, (int)Math.Ceiling((double)Total / PageSize));
-    public bool HasPrev => Page > 1;
+    public bool HasPrevious => Page > 1;
     public bool HasNext => Page < PageCount;
 
-    public async Task InitAsync()
+    public async Task InitializeAsync()
     {
-        if (_inited) return;
-        _inited = true;
-        await CargarAsync(resetPage: true);
+        if (_initialized) return;
+        await CargarAsync();
+        _initialized = true;
     }
+    
+    // Alias para compatibilidad si se llama InitAsync
+    public async Task InitAsync() => await InitializeAsync();
 
     [RelayCommand]
     private async Task BuscarAsync()
@@ -84,36 +74,53 @@ public sealed partial class ExistenciasListViewModel : ObservableObject
     [RelayCommand]
     private async Task LimpiarFiltrosAsync()
     {
-        if (IsBusy) return;
-        Texto = null;
-        NivelSeleccionado = NivelOpciones.FirstOrDefault();
+        TextoBusqueda = null;
+        NivelSeleccionado = null;
         Page = 1;
         await CargarAsync();
     }
+    
+    // El metodo LimpiarFiltrosAsync genera LimpiarFiltrosCommand automaticamente al quitar el sufijo Async
 
-        [RelayCommand]
-    private async Task RefrescarAsync()
+    [RelayCommand]
+    private async Task PaginaAnteriorAsync()
     {
+        if (!HasPrevious) return;
+        Page--;
         await CargarAsync();
     }
+    
+    // Alias para la vista
+    [RelayCommand]
+    private async Task PagAnterior() => await PaginaAnteriorAsync();
+
+    [RelayCommand]
+    private async Task PaginaSiguienteAsync()
+    {
+        if (!HasNext) return;
+        Page++;
+        await CargarAsync();
+    }
+    
+    // Alias para la vista
+    [RelayCommand]
+    private async Task PagSiguiente() => await PaginaSiguienteAsync();
 
     [RelayCommand]
     private async Task NuevoIngresoAsync()
     {
-        if (IsBusy) return;
-
-        var vm = _ingresoFactory();
-        vm.Guardado += async _ =>
+        var vm = new ExistenciaIngresoViewModel(_crudService);
+        vm.VolverSolicitado += CerrarFormulario;
+        vm.Guardado += async (_) => 
         {
-            await MostrarNotificacionAsync("Ingreso registrado", "El stock fue actualizado correctamente.");
             CerrarFormulario();
             await CargarAsync();
+            // Aqu铆 se podr铆a mostrar una notificaci贸n de 茅xito
         };
         vm.Cancelado += CerrarFormulario;
-        vm.VolverSolicitado += CerrarFormulario;
-
+        
         await vm.InicializarAsync();
-
+        
         FormVm = vm;
         IsInForm = true;
     }
@@ -121,30 +128,52 @@ public sealed partial class ExistenciasListViewModel : ObservableObject
     [RelayCommand]
     private async Task NuevaSalidaAsync()
     {
-        if (IsBusy) return;
-
-        var vm = _salidaFactory();
-        vm.Guardado += async _ =>
+        var vm = new ExistenciaSalidaViewModel(_crudService, _service);
+        vm.VolverSolicitado += CerrarFormulario;
+        vm.Guardado += async (_) => 
         {
-            await MostrarNotificacionAsync("Salida registrada", "El stock fue actualizado correctamente.");
             CerrarFormulario();
             await CargarAsync();
         };
         vm.Cancelado += CerrarFormulario;
-        vm.VolverSolicitado += CerrarFormulario;
-
+        
         await vm.InicializarAsync();
-
+        
         FormVm = vm;
         IsInForm = true;
     }
+    
+    // Alias para compatibilidad con XAML
+    public string? Texto
+    {
+        get => TextoBusqueda;
+        set
+        {
+            if (SetProperty(ref textoBusqueda, value))
+            {
+                OnPropertyChanged(nameof(TextoBusqueda));
+            }
+        }
+    }
+
+    // Propiedades para notificaciones
+    [ObservableProperty] private bool isNotifyOpen;
+    [ObservableProperty] private string? notifyTitle;
+    [ObservableProperty] private string? notifyMessage;
+    [ObservableProperty] private bool notifyIsError;
 
     [RelayCommand]
     private void CerrarNotificacion()
     {
         IsNotifyOpen = false;
-        NotifyTitle = null;
-        NotifyMessage = null;
+    }
+
+    private void MostrarNotificacion(string titulo, string mensaje, bool esError = false)
+    {
+        NotifyTitle = titulo;
+        NotifyMessage = mensaje;
+        NotifyIsError = esError;
+        IsNotifyOpen = true;
     }
 
     [RelayCommand]
@@ -152,167 +181,123 @@ public sealed partial class ExistenciasListViewModel : ObservableObject
     {
         try
         {
-            var filtro = CrearFiltro(includePaging: false);
-            var datos = await _svc.ExportarAsync(filtro);
+            IsBusy = true;
+            ErrorMessage = null;
+
+            var filtro = new ExistenciaFiltro
+            {
+                Texto = string.IsNullOrWhiteSpace(TextoBusqueda) ? null : TextoBusqueda.Trim(),
+                Nivel = NivelSeleccionado,
+                Page = 1,
+                PageSize = int.MaxValue // Exportar todo
+            };
+
+            var datos = await _service.ExportarAsync(filtro);
 
             if (datos.Count == 0)
             {
-                await MostrarNotificacionAsync("Sin resultados", "No se encontraron existencias para exportar con el filtro actual.");
+                MostrarNotificacion("Exportar Excel", "No hay datos para exportar.", true);
                 return;
             }
 
             var dialog = new SaveFileDialog
             {
-                Title = "Exportar existencias a Excel",
-                Filter = "Libro de Excel (*.xlsx)|*.xlsx",
                 FileName = $"Existencias_{DateTime.Now:yyyyMMdd_HHmm}.xlsx",
-                AddExtension = true,
                 DefaultExt = ".xlsx",
-                OverwritePrompt = true
+                Filter = "Excel Workbook (.xlsx)|*.xlsx"
             };
 
-            var result = dialog.ShowDialog();
-            if (result != true) return;
-
-            var ruta = dialog.FileName;
+            if (dialog.ShowDialog() != true) return;
 
             await Task.Run(() =>
             {
                 using var wb = new XLWorkbook();
                 var ws = wb.Worksheets.Add("Existencias");
 
-                var headers = new[]
-                {
-                    "Codigo",
-                    "Nombre",
-                    "Unidad",
-                    "Stock",
-                    "Nivel seguro",
-                    "Nivel maximo",
-                    "Nivel minimo",
-                    "Nivel critico",
-                    "Estado",
-                    "Proveedor"
-                };
+                // Encabezados
+                ws.Cell(1, 1).Value = "C贸digo";
+                ws.Cell(1, 2).Value = "Nombre";
+                ws.Cell(1, 3).Value = "Unidad";
+                ws.Cell(1, 4).Value = "Stock Actual";
+                ws.Cell(1, 5).Value = "Nivel Estado";
+                ws.Cell(1, 6).Value = "Proveedor";
 
-                for (var i = 0; i < headers.Length; i++)
+                // Datos
+                for (var i = 0; i < datos.Count; i++)
                 {
-                    var cell = ws.Cell(1, i + 1);
-                    cell.Value = headers[i];
-                    cell.Style.Font.Bold = true;
-                    cell.Style.Fill.BackgroundColor = XLColor.FromArgb(0xE2, 0xE8, 0xF0);
-                }
-
-                for (var index = 0; index < datos.Count; index++)
-                {
-                    var row = index + 2;
-                    var item = datos[index];
-
+                    var item = datos[i];
+                    var row = i + 2;
                     ws.Cell(row, 1).Value = item.Codigo;
                     ws.Cell(row, 2).Value = item.Nombre;
                     ws.Cell(row, 3).Value = item.Unidad;
                     ws.Cell(row, 4).Value = item.StockActual;
-                    ws.Cell(row, 5).Value = item.NivelSeguridad;
-                    ws.Cell(row, 6).Value = item.NivelMaximo;
-                    ws.Cell(row, 7).Value = item.NivelMinimo;
-                    ws.Cell(row, 8).Value = item.NivelCritico;
-                    ws.Cell(row, 9).Value = ObtenerEstadoTexto(item.NivelEstado);
-                    ws.Cell(row, 10).Value = item.Proveedor;
+                    ws.Cell(row, 5).Value = item.NivelEstado.ToString();
+                    ws.Cell(row, 6).Value = item.Proveedor;
                 }
 
                 ws.Columns().AdjustToContents();
-                wb.SaveAs(ruta);
+                wb.SaveAs(dialog.FileName);
             });
 
-            await MostrarNotificacionAsync("Exportacion exitosa", $"Se exportaron {datos.Count} existencias.");
+            MostrarNotificacion("Exportar Excel", "Archivo guardado correctamente.");
         }
         catch (Exception ex)
         {
-            await MostrarNotificacionAsync("Error al exportar", ex.Message);
+            MostrarNotificacion("Exportar Excel", $"Error al exportar: {ex.Message}", true);
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
 
     [RelayCommand]
-    private Task ExportarPdfAsync() => Task.CompletedTask;
-
-    private Task IrPaginaAsync(int page)
+    private async Task ExportarPdfAsync()
     {
-        var target = Math.Clamp(page, 1, PageCount);
-        if (target == Page) return Task.CompletedTask;
-        Page = target;
-        return Task.CompletedTask;
+        // Implementaci贸n pendiente o mock
+        await Task.CompletedTask;
+        MostrarNotificacion("Exportar PDF", "Funcionalidad no implementada a煤n.");
     }
 
-    [RelayCommand]
-    private Task PagAnteriorAsync()
+    private void CerrarFormulario()
     {
-        if (!HasPrev) return Task.CompletedTask;
-        return IrPaginaAsync(Page - 1);
+        IsInForm = false;
+        FormVm = null;
     }
 
-    [RelayCommand]
-    private Task PagSiguienteAsync()
+    private async Task CargarAsync()
     {
-        if (!HasNext) return Task.CompletedTask;
-        return IrPaginaAsync(Page + 1);
-    }
-
-    partial void OnPageChanged(int value)
-    {
-        if (!_inited) return;
-        _ = CargarAsync();
-    }
-
-    partial void OnPageSizeChanged(int value)
-    {
-        if (value <= 0) PageSize = 30;
-        if (!_inited) return;
-        Page = 1;
-        _ = CargarAsync();
-    }
-
-    private ExistenciaFiltro CrearFiltro(bool includePaging)
-    {
-        var filtro = new ExistenciaFiltro
-        {
-            Texto = string.IsNullOrWhiteSpace(Texto) ? null : Texto.Trim(),
-            Nivel = NivelSeleccionado?.Estado
-        };
-
-        if (includePaging)
-        {
-            filtro.Page = Page;
-            filtro.PageSize = PageSize;
-        }
-
-        return filtro;
-    }
-
-    private async Task CargarAsync(bool resetPage = false)
-    {
-        if (resetPage) Page = 1;
-        if (IsBusy) return;
-
         try
         {
             IsBusy = true;
             ErrorMessage = null;
 
-            var filtro = CrearFiltro(includePaging: true);
+            var filtro = new ExistenciaFiltro
+            {
+                Texto = string.IsNullOrWhiteSpace(TextoBusqueda) ? null : TextoBusqueda.Trim(),
+                Nivel = NivelSeleccionado,
+                Page = Page,
+                PageSize = PageSize
+            };
 
-            var result = await _svc.BuscarAsync(filtro);
+            var resultado = await _service.BuscarAsync(filtro);
 
             Items.Clear();
-            foreach (var item in result.Items)
+            foreach (var item in resultado.Items)
             {
                 Items.Add(item);
             }
 
-            Total = result.Total;
-            if (Page > PageCount)
-            {
-                Page = PageCount;
-            }
+            Total = resultado.Total;
+            PageSize = resultado.PageSize;
+            Page = resultado.Page;
+
+            OnPropertyChanged(nameof(PageCount));
+            OnPropertyChanged(nameof(HasPrevious));
+            OnPropertyChanged(nameof(HasNext));
+            
+            // Propiedades para la vista (alias)
+            OnPropertyChanged(nameof(HasPrev));
         }
         catch (Exception ex)
         {
@@ -323,34 +308,8 @@ public sealed partial class ExistenciasListViewModel : ObservableObject
             IsBusy = false;
         }
     }
-
-    private void CerrarFormulario()
-    {
-        FormVm = null;
-        IsInForm = false;
-    }
-
-    private static string ObtenerEstadoTexto(ExistenciaNivelEstado estado) => estado switch
-    {
-        ExistenciaNivelEstado.Critico => "Critico",
-        ExistenciaNivelEstado.Bajo => "Bajo",
-        ExistenciaNivelEstado.Seguro => "Seguro",
-        ExistenciaNivelEstado.Normal => "Normal",
-        ExistenciaNivelEstado.Excedido => "Excedido",
-        _ => "Desconocido"
-    };
-
-    private async Task MostrarNotificacionAsync(string titulo, string mensaje)
-    {
-        NotifyTitle = titulo;
-        NotifyMessage = mensaje;
-        IsNotifyOpen = true;
-        await Task.CompletedTask;
-    }
-
-    public sealed record NivelOption(string Texto, ExistenciaNivelEstado? Estado)
-    {
-        public override string ToString() => Texto;
-    }
+    
+    public bool HasPrev => HasPrevious;
 }
 
+public record NivelOption(ExistenciaNivelEstado? Valor, string Texto);

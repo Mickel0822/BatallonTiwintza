@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -55,6 +55,9 @@ public partial class Usuario
     [InverseProperty("Usuario")]
     public virtual ICollection<LoginAuditoria> LoginAuditoria { get; set; } = new List<LoginAuditoria>();
 
+
+    [InverseProperty("Usuario")]
+    public virtual ICollection<UsuarioSede> UsuarioSede { get; set; } = new List<UsuarioSede>();
     [ForeignKey("UsuarioId")]
     [InverseProperty("Usuario")]
     public virtual ICollection<Rol> Rol { get; set; } = new List<Rol>();

@@ -14,16 +14,18 @@ namespace Tiwintza.Infrastructure.Services;
 
 public sealed class ExistenciasCrudService : IExistenciasCrudService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _dbFactory;
 
-    public ExistenciasCrudService(AppDbContext db)
+    public ExistenciasCrudService(IDbContextFactory<AppDbContext> dbFactory)
     {
-        _db = db;
+        _dbFactory = dbFactory;
     }
 
     public async Task<IReadOnlyList<ProveedorDto>> ObtenerProveedoresAsync(CancellationToken ct = default)
     {
-        return await _db.Proveedor
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        return await db.Proveedor
             .AsNoTracking()
             .OrderBy(p => p.RazonSocial)
             .Select(p => new ProveedorDto
@@ -36,7 +38,9 @@ public sealed class ExistenciasCrudService : IExistenciasCrudService
 
     public async Task<IReadOnlyList<ExistenciaComboItemDto>> ObtenerProductosAsync(string? texto = null, CancellationToken ct = default)
     {
-        IQueryable<Existencia> query = _db.Existencia.AsNoTracking();
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        IQueryable<Existencia> query = db.Existencia.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(texto))
         {
@@ -60,7 +64,9 @@ public sealed class ExistenciasCrudService : IExistenciasCrudService
 
     public async Task<IReadOnlyList<IdNombreDto>> ObtenerAreasAsync(CancellationToken ct = default)
     {
-        return await _db.Area
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        return await db.Area
             .AsNoTracking()
             .OrderBy(a => a.Nombre)
             .Select(a => new IdNombreDto(a.Id, a.Nombre))
@@ -69,6 +75,8 @@ public sealed class ExistenciasCrudService : IExistenciasCrudService
 
     public async Task<ProveedorDto> CrearProveedorRapidoAsync(ProveedorCreateDto dto, CancellationToken ct = default)
     {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
         if (dto is null) throw new ArgumentNullException(nameof(dto));
         if (string.IsNullOrWhiteSpace(dto.Ruc))
             throw new ArgumentException("El RUC es obligatorio", nameof(dto));
@@ -84,11 +92,11 @@ public sealed class ExistenciasCrudService : IExistenciasCrudService
             Email = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email.Trim()
         };
 
-        _db.Proveedor.Add(proveedor);
+        db.Proveedor.Add(proveedor);
 
         try
         {
-            await _db.SaveChangesAsync(ct);
+            await db.SaveChangesAsync(ct);
         }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg &&
                                            pg.ConstraintName == "proveedor_ruc_key")
@@ -105,6 +113,8 @@ public sealed class ExistenciasCrudService : IExistenciasCrudService
 
     public async Task<ExistenciaComboItemDto> CrearExistenciaRapidaAsync(ExistenciaQuickCreateDto dto, CancellationToken ct = default)
     {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
         if (dto is null) throw new ArgumentNullException(nameof(dto));
 
         if (string.IsNullOrWhiteSpace(dto.Codigo))
@@ -138,11 +148,11 @@ public sealed class ExistenciasCrudService : IExistenciasCrudService
             ProveedorPrefId = dto.ProveedorPreferidoId
         };
 
-        _db.Existencia.Add(existencia);
+        db.Existencia.Add(existencia);
 
         try
         {
-            await _db.SaveChangesAsync(ct);
+            await db.SaveChangesAsync(ct);
         }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg &&
                                            pg.ConstraintName == "existencia_codigo_key")
@@ -165,6 +175,8 @@ public sealed class ExistenciasCrudService : IExistenciasCrudService
     /// </summary>
     public async Task<long> RegistrarIngresoAsync(ExistenciaIngresoCreateDto dto, CancellationToken ct = default)
     {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
         if (dto is null) throw new ArgumentNullException(nameof(dto));
         if (dto.ProveedorId <= 0) throw new ArgumentException("Proveedor inválido", nameof(dto));
         if (dto.Detalles is null || dto.Detalles.Count == 0)
@@ -179,17 +191,17 @@ public sealed class ExistenciasCrudService : IExistenciasCrudService
         }
 
         // Verificar proveedor
-        var proveedorExiste = await _db.Proveedor.AnyAsync(p => p.Id == dto.ProveedorId, ct);
+        var proveedorExiste = await db.Proveedor.AnyAsync(p => p.Id == dto.ProveedorId, ct);
         if (!proveedorExiste)
             throw new InvalidOperationException("El proveedor seleccionado no existe.");
 
         // Verificar que todas las existencias existan
         var existenciaIds = dto.Detalles.Select(d => d.ExistenciaId).Distinct().ToList();
-        var totalExistentes = await _db.Existencia.CountAsync(e => existenciaIds.Contains(e.Id), ct);
+        var totalExistentes = await db.Existencia.CountAsync(e => existenciaIds.Contains(e.Id), ct);
         if (totalExistentes != existenciaIds.Count)
             throw new InvalidOperationException("No se encontró alguna de las existencias seleccionadas.");
 
-        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
 
         var compra = new Compra
         {
@@ -212,9 +224,9 @@ public sealed class ExistenciasCrudService : IExistenciasCrudService
             });
         }
 
-        _db.Compra.Add(compra);
+        db.Compra.Add(compra);
 
-        await _db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
 
         return compra.Id;
@@ -226,26 +238,36 @@ public sealed class ExistenciasCrudService : IExistenciasCrudService
     /// </summary>
     public async Task<long> RegistrarSalidaAsync(ExistenciaSalidaCreateDto dto, CancellationToken ct = default)
     {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
         if (dto is null) throw new ArgumentNullException(nameof(dto));
         if (dto.ExistenciaId <= 0) throw new ArgumentException("Existencia inválida", nameof(dto));
         if (dto.AreaId <= 0) throw new ArgumentException("Área inválida", nameof(dto));
         if (dto.Cantidad <= 0) throw new ArgumentException("La cantidad debe ser mayor a cero", nameof(dto));
 
         // Validaciones de referencia
-        var existencia = await _db.Existencia
+        var existencia = await db.Existencia
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.Id == dto.ExistenciaId, ct)
             ?? throw new InvalidOperationException("La existencia seleccionada no existe.");
 
-        var areaExiste = await _db.Area.AnyAsync(a => a.Id == dto.AreaId, ct);
-        if (!areaExiste)
-            throw new InvalidOperationException("El área seleccionada no existe.");
+        var area = await db.Area
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == dto.AreaId, ct)
+            ?? throw new InvalidOperationException("El área seleccionada no existe.");
+
+        // Validación explícita de sede
+        if (existencia.SedeId != area.SedeId)
+        {
+            throw new InvalidOperationException(
+                "No se puede registrar la salida: la existencia pertenece a una sede diferente al área destino.");
+        }
 
         // Validación de cortesía (mensaje amigable). No modifica stock.
         if (existencia.StockActual < dto.Cantidad)
             throw new InvalidOperationException("No hay stock suficiente para registrar la salida.");
 
-        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        await using var tx = await _dbFactory.CreateDbContextAsync(ct).Result.Database.BeginTransactionAsync(ct);
 
         // Solo insertamos la salida; el TRIGGER descuenta stock y actualiza existencia_area_stock
         var salida = new Salida
@@ -259,9 +281,9 @@ public sealed class ExistenciasCrudService : IExistenciasCrudService
             CreadoEn = DateTime.UtcNow
         };
 
-        _db.Salida.Add(salida);
+        db.Salida.Add(salida);
 
-        await _db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
 
         return salida.Id;

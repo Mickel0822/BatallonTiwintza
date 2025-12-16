@@ -39,70 +39,60 @@
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                        <Button Style="{StaticResource OutlineButton.Small}" Command="{Binding BuscarCommand}">
-                            <StackPanel Orientation="Horizontal">
-                                <iconPacks:PackIconMaterial Kind="FilterOutline" Width="16" Height="16" Margin="0,0,8,0"/>
-                                <TextBlock Text="Filtros"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Style="{StaticResource OutlineButton.Small}" Command="{Binding ExportarExcelCommand}" Margin="8,0,0,0">
+                        <Button Style="{StaticResource OutlineButton.Small}" Command="{Binding ExportarExcelCommand}" Margin="0,0,8,0">
                             <StackPanel Orientation="Horizontal">
                                 <iconPacks:PackIconMaterial Kind="FileExcelOutline" Width="16" Height="16" Margin="0,0,8,0"/>
                                 <TextBlock Text="Excel"/>
                             </StackPanel>
                         </Button>
-                        <Button Style="{StaticResource OutlineButton.Small}" Command="{Binding ExportarPdfCommand}" Margin="8,0,0,0">
+                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding NuevoIngresoCommand}" Margin="0,0,8,0">
                             <StackPanel Orientation="Horizontal">
-                                <iconPacks:PackIconMaterial Kind="FilePdfBox" Width="16" Height="16" Margin="0,0,8,0"/>
-                                <TextBlock Text="PDF"/>
+                                <iconPacks:PackIconMaterial Kind="ArrowDownBold" Width="16" Height="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="Ingreso"/>
                             </StackPanel>
                         </Button>
-                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding NuevoIngresoCommand}" Margin="16,0,0,0">
+                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding NuevaSalidaCommand}">
                             <StackPanel Orientation="Horizontal">
-                                <iconPacks:PackIconMaterial Kind="CartPlus" Width="16" Height="16" Margin="0,0,8,0"/>
-                                <TextBlock Text="Registrar Ingreso"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Style="{StaticResource GhostButton}" Command="{Binding NuevaSalidaCommand}" Margin="8,0,0,0">
-                            <StackPanel Orientation="Horizontal">
-                                <iconPacks:PackIconMaterial Kind="TruckFast" Width="16" Height="16" Margin="0,0,8,0"/>
-                                <TextBlock Text="Registrar Salida"/>
+                                <iconPacks:PackIconMaterial Kind="ArrowUpBold" Width="16" Height="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="Salida"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
                 </DockPanel>
-
-                <!-- Filtros -->
                 <Border Grid.Row="1" Background="White" CornerRadius="12" Padding="16" Margin="0,0,0,12"
                         BorderBrush="{DynamicResource GridBorderBrush}" BorderThickness="1">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="3*"/>
-                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
                         <TextBox Grid.Column="0"
                                  Style="{StaticResource InputTextBox}"
-                                 Tag="Codigo o nombre"
-                                 Text="{Binding Texto, UpdateSourceTrigger=PropertyChanged}"/>
+                                 Tag="Buscar por código o nombre..."
+                                 Text="{Binding Texto, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="0,0,12,0">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding BuscarCommand}"/>
+                            </TextBox.InputBindings>
+                        </TextBox>
 
                         <ComboBox Grid.Column="1"
                                   Style="{StaticResource InputComboBox}"
                                   ItemsSource="{Binding NivelOpciones}"
                                   SelectedItem="{Binding NivelSeleccionado, Mode=TwoWay}"
                                   DisplayMemberPath="Texto"
-                                  Margin="12,0,0,0"
-                                  Tag="Nivel"/>
+                                  MinWidth="180"
+                                  Margin="0,0,12,0"
+                                  Tag="Nivel de stock"/>
 
                         <Button Grid.Column="2"
-                                Style="{StaticResource GhostButton.Small}"
-                                Command="{Binding LimpiarFiltrosAsyncCommand}"
-                                Margin="16,0,0,0"
-                                HorizontalAlignment="Right">
+                                Style="{StaticResource PrimaryButton.Small}"
+                                Command="{Binding BuscarCommand}">
                             <StackPanel Orientation="Horizontal">
-                                <iconPacks:PackIconMaterial Kind="CloseCircleOutline" Width="16" Height="16" Margin="0,0,8,0"/>
-                                <TextBlock Text="Limpiar filtros"/>
+                                <iconPacks:PackIconMaterial Kind="Magnify" Width="16" Height="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="Buscar"/>
                             </StackPanel>
                         </Button>
                     </Grid>

@@ -11,6 +11,10 @@
              d:DesignWidth="1200"
              Loaded="OnLoaded">
 
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
+
     <Grid>
         <!-- ================= LISTADO ================= -->
         <Grid x:Name="ListadoRoot">
@@ -44,13 +48,8 @@
                                 <TextBlock Text="Excel"/>
                             </StackPanel>
                         </Button>
-                        <Button Style="{StaticResource OutlineButton.Small}" HorizontalAlignment="Center" Command="{Binding ExportarPdfCommand}" Margin="8,0,0,0">
-                            <StackPanel Orientation="Horizontal">
-                                <iconPacks:PackIconMaterial Kind="FilePdfBox" Width="16" Height="16" Margin="0,0,8,0"/>
-                                <TextBlock Text="PDF"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding NuevoCommand}" Margin="8,0,0,0">
+                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding NuevoCommand}" Margin="8,0,0,0"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
                             <StackPanel Orientation="Horizontal">
                                 <iconPacks:PackIconMaterial Kind="Plus" Width="16" Height="16" Margin="0,0,8,0"/>
                                 <TextBlock Text="Nuevo"/>
@@ -59,83 +58,9 @@
                     </StackPanel>
                 </DockPanel>
 
-                <!-- Filtros -->
-                <Grid Grid.Row="1" Margin="0,0,0,12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="2*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <TextBox Grid.Column="0"
-                             Style="{StaticResource InputTextBox}"
-                             Tag="Buscar codigo o nombre"
-                             Text="{Binding Texto, UpdateSourceTrigger=PropertyChanged}"/>
-
-                    <ComboBox Grid.Column="1"
-                              Style="{StaticResource InputComboBox}"
-                              MinWidth="170"
-                              DisplayMemberPath="Nombre"
-                              SelectedValuePath="Id"
-                              SelectedValue="{Binding AreaId, Mode=TwoWay, Converter={StaticResource ZeroToNullLong}}"
-                              Tag="Seleccione un area">
-                        <ComboBox.Resources>
-                            <CollectionViewSource x:Key="AreasView" Source="{Binding Areas}"/>
-                        </ComboBox.Resources>
-                        <ComboBox.ItemsSource>
-                            <CompositeCollection>
-                                <x:Static Member="helpers:UiSentinels.Ninguno"/>
-                                <CollectionContainer Collection="{Binding Source={StaticResource AreasView}}"/>
-                            </CompositeCollection>
-                        </ComboBox.ItemsSource>
-                    </ComboBox>
-
-                    <ComboBox Grid.Column="2"
-                              Style="{StaticResource InputComboBox}"
-                              DisplayMemberPath="Nombre"
-                              SelectedValuePath="Id"
-                              SelectedValue="{Binding EstadoId, Mode=TwoWay, Converter={StaticResource ZeroToNullLong}}"
-                              Tag="Seleccione un estado">
-                        <ComboBox.Resources>
-                            <CollectionViewSource x:Key="EstadosView" Source="{Binding Estados}"/>
-                        </ComboBox.Resources>
-                        <ComboBox.ItemsSource>
-                            <CompositeCollection>
-                                <x:Static Member="helpers:UiSentinels.Ninguno"/>
-                                <CollectionContainer Collection="{Binding Source={StaticResource EstadosView}}"/>
-                            </CompositeCollection>
-                        </ComboBox.ItemsSource>
-                    </ComboBox>
-
-                    <ComboBox Grid.Column="3"
-                              Style="{StaticResource InputComboBox}"
-                              DisplayMemberPath="Nombre"
-                              SelectedValuePath="Id"
-                              SelectedValue="{Binding TipoId, Mode=TwoWay, Converter={StaticResource ZeroToNullLong}}"
-                              Tag="Seleccione un tipo">
-                        <ComboBox.Resources>
-                            <CollectionViewSource x:Key="TiposView" Source="{Binding Tipos}"/>
-                        </ComboBox.Resources>
-                        <ComboBox.ItemsSource>
-                            <CompositeCollection>
-                                <x:Static Member="helpers:UiSentinels.Ninguno"/>
-                                <CollectionContainer Collection="{Binding Source={StaticResource TiposView}}"/>
-                            </CompositeCollection>
-                        </ComboBox.ItemsSource>
-                    </ComboBox>
-
-                    <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Style="{StaticResource PrimaryButton.Small}"
-                                Command="{Binding AplicarCommand}"
-                                Content="Aplicar"/>
-                    </StackPanel>
-                </Grid>
-
                 <!-- KPIs -->
-                <UniformGrid Grid.Row="2" Columns="3" Margin="0,0,0,12">
-                    <Border Style="{StaticResource Card}">
+                <UniformGrid Grid.Row="1" Columns="3" Margin="0,0,0,24">
+                    <Border Style="{StaticResource Card}" Margin="0,0,12,0">
                         <StackPanel>
                             <TextBlock Text="Total" Style="{StaticResource Caption}"/>
                             <TextBlock Text="{Binding Total}" Style="{StaticResource H1}"/>
@@ -154,6 +79,68 @@
                         </StackPanel>
                     </Border>
                 </UniformGrid>
+
+                <!-- Filtros -->
+                <Border Grid.Row="2" Background="White" CornerRadius="12" Padding="16" Margin="0,0,0,12"
+                        BorderBrush="{DynamicResource GridBorderBrush}" BorderThickness="1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Labels -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Búsqueda" Style="{StaticResource Caption}" Margin="0,0,0,4"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Area" Style="{StaticResource Caption}" Margin="0,0,0,4"/>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Tipo" Style="{StaticResource Caption}" Margin="0,0,0,4"/>
+                        <TextBlock Grid.Row="0" Grid.Column="3" Text="Estado" Style="{StaticResource Caption}" Margin="0,0,0,4"/>
+
+                        <!-- Controls -->
+                        <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding TextoBusqueda, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource InputTextBox}" 
+                                 Margin="0,0,12,0">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding BuscarCommand}"/>
+                            </TextBox.InputBindings>
+                        </TextBox>
+
+                        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Areas}" 
+                                  SelectedItem="{Binding AreaSeleccionada}"
+                                  DisplayMemberPath="Nombre"
+                                  Width="180" Margin="0,0,12,0"/>
+
+                        <ComboBox Grid.Row="1" Grid.Column="2" ItemsSource="{Binding Tipos}" 
+                                  SelectedItem="{Binding TipoSeleccionado}"
+                                  DisplayMemberPath="Nombre"
+                                  Width="150" Margin="0,0,12,0"/>
+
+                        <ComboBox Grid.Row="1" Grid.Column="3" ItemsSource="{Binding Estados}" 
+                                  SelectedItem="{Binding EstadoSeleccionado}"
+                                  DisplayMemberPath="Nombre"
+                                  Width="140" Margin="0,0,12,0"/>
+
+                        <!-- Botones -->
+                        <StackPanel Grid.Row="1" Grid.Column="4" Orientation="Horizontal">
+                            <Button Style="{StaticResource PrimaryButton}" Command="{Binding BuscarCommand}" Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <iconPacks:PackIconMaterial Kind="Magnify" Width="16" Height="16" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Buscar"/>
+                                </StackPanel>
+                            </Button>
+                            
+                            <Button Style="{StaticResource OutlineButton}" Command="{Binding LimpiarFiltrosCommand}" ToolTip="Limpiar filtros">
+                                 <iconPacks:PackIconMaterial Kind="FilterOff" Width="16" Height="16"/>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
 
                 <!-- Tabla -->
                 <DataGrid x:Name="ActivosGrid"

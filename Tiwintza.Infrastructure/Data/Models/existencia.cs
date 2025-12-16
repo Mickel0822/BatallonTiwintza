@@ -1,16 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using Tiwintza.Infrastructure.Data;
 
 namespace Tiwintza.Infrastructure.Data.Models;
 
 [Table("existencia")]
-[Index("Codigo", Name = "existencia_codigo_key", IsUnique = true)]
 [Index("NivelCritico", "NivelMinimo", "NivelSeguridad", "NivelMaximo", "StockActual", Name = "idx_existencia_alertas")]
 [Index("Nombre", Name = "idx_existencia_nombre")]
-public partial class Existencia
+public partial class Existencia : ISedeScoped
 {
     [Key]
     [Column("id")]
@@ -47,6 +47,10 @@ public partial class Existencia
 
     [Column("proveedor_pref_id")]
     public long? ProveedorPrefId { get; set; }
+
+    public Guid SedeId { get; set; }
+
+
 
     [InverseProperty("Existencia")]
     public virtual ICollection<DetalleCompra> DetalleCompra { get; set; } = new List<DetalleCompra>();

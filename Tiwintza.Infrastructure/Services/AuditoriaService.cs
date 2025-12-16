@@ -13,30 +13,32 @@ namespace Tiwintza.Infrastructure.Services;
 
 public sealed class AuditoriaService : IAuditoriaService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _dbFactory;
 
-    public AuditoriaService(AppDbContext db)
+    public AuditoriaService(IDbContextFactory<AppDbContext> dbFactory)
     {
-        _db = db;
+        _dbFactory = dbFactory;
     }
 
     public async Task<AuditoriaCatalogosDto> ObtenerCatalogosAsync(CancellationToken ct = default)
     {
-        var usuarios = await _db.Auditoria.AsNoTracking()
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        var usuarios = await db.Auditoria.AsNoTracking()
             .Where(a => a.Usuario != null && a.Usuario != "")
             .Select(a => a.Usuario)
             .Distinct()
             .OrderBy(a => a)
             .ToListAsync(ct);
 
-        var entidades = await _db.Auditoria.AsNoTracking()
+        var entidades = await db.Auditoria.AsNoTracking()
             .Where(a => a.Entidad != null && a.Entidad != "")
             .Select(a => a.Entidad)
             .Distinct()
             .OrderBy(a => a)
             .ToListAsync(ct);
 
-        var acciones = await _db.Auditoria.AsNoTracking()
+        var acciones = await db.Auditoria.AsNoTracking()
             .Where(a => a.Accion != null && a.Accion != "")
             .Select(a => a.Accion)
             .Distinct()
@@ -53,19 +55,67 @@ public sealed class AuditoriaService : IAuditoriaService
 
     public async Task<PagedResult<AuditoriaListItemDto>> BuscarAsync(AuditoriaFiltroDto filtro, CancellationToken ct = default)
     {
-        filtro ??= new AuditoriaFiltroDto();
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
-        var page = filtro.Page <= 0 ? 1 : filtro.Page;
-        var pageSize = filtro.PageSize <= 0 ? 20 : Math.Clamp(filtro.PageSize, 10, 200);
+        var query = db.Auditoria.AsNoTracking();
 
-        var query = AplicarFiltros(filtro);
+        if (filtro.FechaInicio.HasValue)
+        {
+            var fechaInicioUtc = DateTime.SpecifyKind(filtro.FechaInicio.Value, DateTimeKind.Utc);
+            query = query.Where(a => a.FechaHora >= fechaInicioUtc);
+        }
+
+        if (filtro.FechaFin.HasValue)
+        {
+            var fechaFinUtc = DateTime.SpecifyKind(filtro.FechaFin.Value, DateTimeKind.Utc);
+            query = query.Where(a => a.FechaHora <= fechaFinUtc);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filtro.Usuario))
+            query = query.Where(a => a.Usuario == filtro.Usuario);
+
+        if (!string.IsNullOrWhiteSpace(filtro.Entidad))
+            query = query.Where(a => a.Entidad == filtro.Entidad);
+
+        if (!string.IsNullOrWhiteSpace(filtro.Accion))
+            query = query.Where(a => a.Accion == filtro.Accion);
+
+        if (!string.IsNullOrWhiteSpace(filtro.Texto))
+        {
+            var term = filtro.Texto.Trim();
+            if (long.TryParse(term, out var id))
+            {
+                query = query.Where(a => a.IdEntidad == id);
+            }
+            else
+            {
+                query = query.Where(a => a.Detalle.Contains(term));
+            }
+        }
+
         var total = await query.CountAsync(ct);
 
-        var ordenado = AplicarOrdenamiento(query, filtro);
+        if (!string.IsNullOrWhiteSpace(filtro.SortBy))
+        {
+            if (filtro.SortBy.ToLower() == "fecha")
+                query = filtro.SortDesc ? query.OrderByDescending(a => a.FechaHora) : query.OrderBy(a => a.FechaHora);
+            else if (filtro.SortBy.ToLower() == "usuario")
+                query = filtro.SortDesc ? query.OrderByDescending(a => a.Usuario) : query.OrderBy(a => a.Usuario);
+            else if (filtro.SortBy.ToLower() == "entidad")
+                query = filtro.SortDesc ? query.OrderByDescending(a => a.Entidad) : query.OrderBy(a => a.Entidad);
+            else if (filtro.SortBy.ToLower() == "accion")
+                query = filtro.SortDesc ? query.OrderByDescending(a => a.Accion) : query.OrderBy(a => a.Accion);
+            else
+                query = query.OrderByDescending(a => a.FechaHora);
+        }
+        else
+        {
+            query = query.OrderByDescending(a => a.FechaHora);
+        }
 
-        var registros = await ordenado
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        var items = await query
+            .Skip((filtro.Page - 1) * filtro.PageSize)
+            .Take(filtro.PageSize)
             .Select(a => new AuditoriaListItemDto
             {
                 Id = a.Id,
@@ -74,116 +124,55 @@ public sealed class AuditoriaService : IAuditoriaService
                 Accion = a.Accion,
                 Entidad = a.Entidad,
                 EntidadId = a.IdEntidad,
-                DetalleJson = a.Detalle
+                DetalleJson = a.Detalle,
+                TransactionId = a.TransactionId,
+                AccionUsuario = a.AccionUsuario
             })
             .ToListAsync(ct);
 
-        foreach (var item in registros)
+        // Generar resumen en memoria
+        foreach (var item in items)
         {
-            item.Resumen = ExtraerResumen(item.DetalleJson);
+            item.Resumen = GenerarResumen(item.DetalleJson);
         }
 
-        return new PagedResult<AuditoriaListItemDto>(registros, total, page, pageSize);
+        return new PagedResult<AuditoriaListItemDto>(
+            items,
+            total,
+            filtro.Page,
+            filtro.PageSize
+        );
     }
 
     public async Task<IReadOnlyList<AuditoriaListItemDto>> ExportarAsync(AuditoriaFiltroDto filtro, CancellationToken ct = default)
     {
-        filtro ??= new AuditoriaFiltroDto();
-
-        var query = AplicarFiltros(filtro);
-        var ordenado = AplicarOrdenamiento(query, filtro);
-
-        var registros = await ordenado
-            .Select(a => new AuditoriaListItemDto
-            {
-                Id = a.Id,
-                FechaHora = a.FechaHora,
-                Usuario = a.Usuario,
-                Accion = a.Accion,
-                Entidad = a.Entidad,
-                EntidadId = a.IdEntidad,
-                DetalleJson = a.Detalle
-            })
-            .ToListAsync(ct);
-
-        foreach (var item in registros)
+        // Reutilizar lógica de búsqueda pero sin paginación
+        var filtroExport = new AuditoriaFiltroDto
         {
-            item.Resumen = ExtraerResumen(item.DetalleJson);
-        }
-
-        return registros;
-    }
-
-    private IQueryable<Data.Models.Auditoria> AplicarFiltros(AuditoriaFiltroDto filtro)
-    {
-        var query = _db.Auditoria.AsNoTracking();
-
-        if (filtro.FechaInicio is { } fi)
-        {
-            query = query.Where(a => a.FechaHora >= fi);
-        }
-        if (filtro.FechaFin is { } ff)
-        {
-            query = query.Where(a => a.FechaHora <= ff);
-        }
-        if (!string.IsNullOrWhiteSpace(filtro.Usuario))
-        {
-            var usuario = filtro.Usuario.Trim();
-            query = query.Where(a => a.Usuario == usuario);
-        }
-        if (!string.IsNullOrWhiteSpace(filtro.Entidad))
-        {
-            var entidad = filtro.Entidad.Trim();
-            query = query.Where(a => a.Entidad == entidad);
-        }
-        if (!string.IsNullOrWhiteSpace(filtro.Accion))
-        {
-            var accion = filtro.Accion.Trim();
-            query = query.Where(a => a.Accion == accion);
-        }
-        if (!string.IsNullOrWhiteSpace(filtro.Texto))
-        {
-            var texto = filtro.Texto.Trim();
-            var like = $"%{texto}%";
-            query = query.Where(a =>
-                EF.Functions.ILike(a.Usuario, like) ||
-                EF.Functions.ILike(a.Entidad, like) ||
-                EF.Functions.ILike(a.Accion, like) ||
-                (a.Detalle != null && EF.Functions.ILike(a.Detalle, like)));
-        }
-
-        return query;
-    }
-
-    private static IOrderedQueryable<Data.Models.Auditoria> AplicarOrdenamiento(IQueryable<Data.Models.Auditoria> query, AuditoriaFiltroDto filtro)
-    {
-        var sortBy = (filtro.SortBy ?? "fecha").Trim().ToLowerInvariant();
-        var desc = filtro.SortDesc;
-
-        return sortBy switch
-        {
-            "usuario" => desc
-                ? query.OrderByDescending(a => a.Usuario).ThenByDescending(a => a.FechaHora)
-                : query.OrderBy(a => a.Usuario).ThenByDescending(a => a.FechaHora),
-            "accion" => desc
-                ? query.OrderByDescending(a => a.Accion).ThenByDescending(a => a.FechaHora)
-                : query.OrderBy(a => a.Accion).ThenByDescending(a => a.FechaHora),
-            "entidad" => desc
-                ? query.OrderByDescending(a => a.Entidad).ThenByDescending(a => a.FechaHora)
-                : query.OrderBy(a => a.Entidad).ThenByDescending(a => a.FechaHora),
-            "id" => desc
-                ? query.OrderByDescending(a => a.Id)
-                : query.OrderBy(a => a.Id),
-            _ => desc
-                ? query.OrderByDescending(a => a.FechaHora)
-                : query.OrderBy(a => a.FechaHora)
+            FechaInicio = filtro.FechaInicio,
+            FechaFin = filtro.FechaFin,
+            Usuario = filtro.Usuario,
+            Entidad = filtro.Entidad,
+            Accion = filtro.Accion,
+            Texto = filtro.Texto,
+            SortBy = filtro.SortBy,
+            SortDesc = filtro.SortDesc,
+            Page = 1,
+            PageSize = int.MaxValue
         };
+        var result = await BuscarAsync(filtroExport, ct);
+        return result.Items;
     }
 
-    private static string? ExtraerResumen(string? detalleJson)
+    public async Task<PagedResult<AuditoriaGroupedDto>> BuscarAgrupadasAsync(AuditoriaFiltroDto filtro, CancellationToken ct = default)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        return await db.BuscarAgrupadasAsync(filtro, ct);
+    }
+
+    private static string? GenerarResumen(string? detalleJson)
     {
         if (string.IsNullOrWhiteSpace(detalleJson)) return null;
-
         try
         {
             using var doc = JsonDocument.Parse(detalleJson);
@@ -205,6 +194,6 @@ public sealed class AuditoriaService : IAuditoriaService
         }
 
         var clean = detalleJson.Replace('\n', ' ').Replace("\r", string.Empty).Trim();
-        return clean.Length > 140 ? clean[..140] + "�" : clean;
+        return clean.Length > 140 ? clean[..140] + "…" : clean;
     }
 }

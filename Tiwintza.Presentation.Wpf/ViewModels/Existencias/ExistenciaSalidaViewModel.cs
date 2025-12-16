@@ -145,6 +145,8 @@ public sealed partial class ExistenciaSalidaViewModel : ObservableValidator
     [RelayCommand]
     private async Task GuardarAsync()
     {
+        if (IsBusy) return;
+
         ErrorMessage = null;
         ValidateAllProperties();
         OnPropertyChanged(nameof(PuedeGuardar));

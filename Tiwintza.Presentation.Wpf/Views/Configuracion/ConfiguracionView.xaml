@@ -84,6 +84,18 @@
                             <DataGridTextColumn Header="Roles" Binding="{Binding Roles}" Width="200"/>
                             <DataGridTextColumn Header="Activo" Binding="{Binding IsActive}" Width="80"/>
                             <DataGridTextColumn Header="Creado" Binding="{Binding CreadoEn}" Width="160"/>
+                            <DataGridTemplateColumn Width="Auto">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource GhostButton.Small}"
+                                                Command="{Binding DataContext.EditarUsuarioCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip="Editar usuario">
+                                            <iconPacks:PackIconMaterial Kind="Pencil" Width="16" Height="16"/>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -115,7 +127,7 @@
                         BorderBrush="{DynamicResource GridBorderBrush}"
                         BorderThickness="1">
                     <StackPanel>
-                        <TextBlock Text="Registrar usuario" Style="{StaticResource H3}"/>
+                        <TextBlock Text="{Binding TituloDialogo}" Style="{StaticResource H3}"/>
                         <TextBlock Text="Complete la información para crear un nuevo usuario"
                                    Style="{StaticResource Caption}"
                                    Foreground="{DynamicResource MutedBrush}"/>
@@ -154,7 +166,7 @@
 										 Tag="Contraseña"
                                          Style="{StaticResource InputPasswordBox}"
                                          PasswordChanged="PasswordBox_OnPasswordChanged"
-                                         ToolTip="Contraseña"/>
+                                         ToolTip="Contraseña (dejar en blanco para no cambiar)"/>
 
                             <PasswordBox x:Name="ConfirmPasswordBox"
                                          Grid.Row="2" Grid.Column="1"
@@ -168,6 +180,34 @@
                                   SelectedItem="{Binding RolSeleccionado}"
                                   Style="{StaticResource InputComboBox}"
                                   Tag="Rol del usuario"/>
+
+                        <StackPanel Margin="0,12,0,0">
+                            <TextBlock Text="Sedes asignadas"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock Text="Selecciona una o varias sedes para el nuevo usuario"
+                                       Style="{StaticResource Caption}"
+                                       Foreground="{DynamicResource MutedBrush}"
+                                       Margin="0,2,0,0"/>
+                            <ItemsControl ItemsSource="{Binding Sedes}"
+                                          Margin="0,8,0,0">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding Nombre}"
+                                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                  Margin="0,4,16,0"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <CheckBox Content="Acceso a todas las sedes"
+                                      IsChecked="{Binding TodasLasSedesSeleccionadas, Mode=TwoWay}"
+                                      FontWeight="SemiBold"
+                                      Margin="0,8,0,0"/>
+                        </StackPanel>
 
                         <CheckBox Content="Usuario activo"
                                   IsChecked="{Binding NuevoUsuarioActivo}"
@@ -211,3 +251,4 @@
         </Grid>
     </Grid>
 </UserControl>
+

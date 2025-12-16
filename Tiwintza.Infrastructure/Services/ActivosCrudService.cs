@@ -13,33 +13,35 @@ namespace Tiwintza.Infrastructure.Services;
 
 public sealed class ActivosCrudService : IActivosCrudService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private const string AreaProcesoBajaNombre = "Bodega en proceso de baja";
     private const string AreaBajaNombre = "Bodega de Baja";
     private const string EstadoMaloNombre = "Malo";
-    public ActivosCrudService(AppDbContext db) => _db = db;
+    public ActivosCrudService(IDbContextFactory<AppDbContext> dbFactory) => _dbFactory = dbFactory;
 
     public async Task<(IEnumerable<IdNombreDto> Areas,
                        IEnumerable<IdNombreDto> Estados,
                        IEnumerable<IdNombreDto> Tipos,
                        IEnumerable<ProveedorDto> Proveedores)> CatalogosFormAsync()
     {
-        var areas = await _db.Area.AsNoTracking()
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var areas = await db.Area.AsNoTracking()
             .OrderBy(x => x.Nombre)
             .Select(x => new IdNombreDto(x.Id, x.Nombre))          // <-- constructor posicional
             .ToListAsync();
 
-        var estados = await _db.Estado.AsNoTracking()
+        var estados = await db.Estado.AsNoTracking()
             .OrderBy(x => x.Nombre)
             .Select(x => new IdNombreDto(x.Id, x.Nombre))          // <-- constructor posicional
             .ToListAsync();
 
-        var tipos = await _db.TipoBien.AsNoTracking()
+        var tipos = await db.TipoBien.AsNoTracking()
             .OrderBy(x => x.Nombre)
             .Select(x => new IdNombreDto(x.Id, x.Nombre))          // <-- constructor posicional
             .ToListAsync();
 
-        var proveedores = await _db.Proveedor.AsNoTracking()
+        var proveedores = await db.Proveedor.AsNoTracking()
         .OrderBy(x => x.RazonSocial)
         .Select(x => new ProveedorDto
         {                  // clase con ctor por defecto
@@ -53,7 +55,9 @@ public sealed class ActivosCrudService : IActivosCrudService
 
     public async Task<IReadOnlyList<ActivoMovimientoDto>> MovimientosAsync(long activoId)
     {
-        return await _db.TrasladoActivo.AsNoTracking()
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        return await db.TrasladoActivo.AsNoTracking()
             .Where(t => t.ActivoId == activoId)
             .OrderByDescending(t => t.Fecha)
             .Select(t => new ActivoMovimientoDto
@@ -69,6 +73,8 @@ public sealed class ActivosCrudService : IActivosCrudService
 
     public async Task<ProveedorDto> CrearProveedorRapidoAsync(ProveedorCreateDto dto)
     {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
         if (string.IsNullOrWhiteSpace(dto.Ruc))
         {
             throw new ArgumentException("El RUC es obligatorio", nameof(dto));
@@ -85,10 +91,10 @@ public sealed class ActivosCrudService : IActivosCrudService
             Telefono = string.IsNullOrWhiteSpace(dto.Telefono) ? null : dto.Telefono.Trim(),
             Email = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email.Trim()
         };
-        _db.Proveedor.Add(proveedor);
+        db.Proveedor.Add(proveedor);
         try
         {
-            await _db.SaveChangesAsync();
+            await db.SaveChangesAsync();
         }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg &&
                                            pg.ConstraintName == "proveedor_ruc_key")
@@ -104,7 +110,9 @@ public sealed class ActivosCrudService : IActivosCrudService
 
     public async Task<ActivoFormDto> ObtenerAsync(long id)
     {
-        var e = await _db.Activo.AsNoTracking().FirstAsync(x => x.Id == id);
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var e = await db.Activo.AsNoTracking().FirstAsync(x => x.Id == id);
         return new ActivoFormDto
         {
             Id = e.Id,
@@ -131,6 +139,8 @@ public sealed class ActivosCrudService : IActivosCrudService
 
     public async Task<long> CrearAsync(ActivoCreateDto d)
     {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
         var e = new Activo
         {
             CodigoInventario = d.CodigoInventario,
@@ -153,10 +163,10 @@ public sealed class ActivosCrudService : IActivosCrudService
             Observaciones = d.Observaciones
         };
 
-        _db.Activo.Add(e);
+        db.Activo.Add(e);
         try
         {
-            await _db.SaveChangesAsync();
+            await db.SaveChangesAsync();
             return e.Id;
         }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg &&
@@ -168,7 +178,9 @@ public sealed class ActivosCrudService : IActivosCrudService
 
     public async Task ActualizarAsync(long id, ActivoUpdateDto d)
     {
-        var e = await _db.Activo.FirstAsync(x => x.Id == id);
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var e = await db.Activo.FirstAsync(x => x.Id == id);
 
         e.CodigoInventario = d.CodigoInventario;
         e.Nombre = d.Nombre;
@@ -191,7 +203,7 @@ public sealed class ActivosCrudService : IActivosCrudService
 
         try
         {
-            await _db.SaveChangesAsync();
+            await db.SaveChangesAsync();
         }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg &&
                                            pg.ConstraintName == "activo_codigo_inventario_key")
@@ -202,14 +214,16 @@ public sealed class ActivosCrudService : IActivosCrudService
 
     public async Task TrasladarAsync(long activoId, long areaDestinoId, DateOnly fecha, string? observacion = null, string? usuario = null)
     {
-        var activo = await _db.Activo.FirstAsync(x => x.Id == activoId);
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var activo = await db.Activo.FirstAsync(x => x.Id == activoId);
         var areaOrigenId = activo.AreaId;
         if (areaOrigenId == areaDestinoId)
         {
             return;
         }
 
-        var areaDestino = await _db.Area.FindAsync(areaDestinoId);
+        var areaDestino = await db.Area.FindAsync(areaDestinoId);
         if (areaDestino is null)
         {
             throw new InvalidOperationException($"El area destino con id {areaDestinoId} no existe.");
@@ -217,7 +231,7 @@ public sealed class ActivosCrudService : IActivosCrudService
 
         if (NombreCoincide(areaDestino.Nombre, AreaProcesoBajaNombre))
         {
-            await AsignarEstadoAsync(activo, EstadoMaloNombre);
+            await AsignarEstadoAsync(db, activo, EstadoMaloNombre);
         }
 
         var movimiento = new TrasladoActivo
@@ -229,17 +243,19 @@ public sealed class ActivosCrudService : IActivosCrudService
             Observacion = observacion,
             Usuario = usuario
         };
-        _db.TrasladoActivo.Add(movimiento);
+        db.TrasladoActivo.Add(movimiento);
         activo.AreaId = areaDestinoId;
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
     }
 
     public async Task DarBajaAsync(long activoId, string codigoInformeTecnico, DateOnly fechaBaja, string responsable, string? observaciones = null)
     {
-        var yaBaja = await _db.BajaActivo.AnyAsync(b => b.ActivoId == activoId);
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var yaBaja = await db.BajaActivo.AnyAsync(b => b.ActivoId == activoId);
         if (yaBaja) return;
 
-        var activo = await _db.Activo.FirstAsync(x => x.Id == activoId);
+        var activo = await db.Activo.FirstAsync(x => x.Id == activoId);
         var baja = new BajaActivo
         {
             ActivoId = activoId,
@@ -248,9 +264,9 @@ public sealed class ActivosCrudService : IActivosCrudService
             Responsable = responsable,
             Observaciones = observaciones
         };
-        _db.BajaActivo.Add(baja);
+        db.BajaActivo.Add(baja);
 
-        var areaDestinoId = await BuscarAreaIdPorNombreAsync(AreaBajaNombre);
+        var areaDestinoId = await BuscarAreaIdPorNombreAsync(db, AreaBajaNombre);
         if (areaDestinoId is long areaDestino && areaDestino != activo.AreaId)
         {
             var areaOrigenId = activo.AreaId;
@@ -263,39 +279,39 @@ public sealed class ActivosCrudService : IActivosCrudService
                 Observacion = observaciones,
                 Usuario = responsable
             };
-            _db.TrasladoActivo.Add(traslado);
+            db.TrasladoActivo.Add(traslado);
             activo.AreaId = areaDestino;
         }
 
-        await AsignarEstadoAsync(activo, EstadoMaloNombre);
-        await _db.SaveChangesAsync();
+        await AsignarEstadoAsync(db, activo, EstadoMaloNombre);
+        await db.SaveChangesAsync();
     }
 
     private static bool NombreCoincide(string? actual, string esperado) =>
         !string.IsNullOrWhiteSpace(actual) &&
         string.Equals(actual.Trim(), esperado, StringComparison.OrdinalIgnoreCase);
 
-    private Task<long?> BuscarAreaIdPorNombreAsync(string nombre)
+    private static Task<long?> BuscarAreaIdPorNombreAsync(AppDbContext db, string nombre)
     {
         var target = nombre.Trim().ToLowerInvariant();
-        return _db.Area
+        return db.Area
             .Where(a => a.Nombre.Trim().ToLower() == target)
             .Select(a => (long?)a.Id)
             .FirstOrDefaultAsync();
     }
 
-    private Task<long?> BuscarEstadoIdPorNombreAsync(string nombre)
+    private static Task<long?> BuscarEstadoIdPorNombreAsync(AppDbContext db, string nombre)
     {
         var target = nombre.Trim().ToLowerInvariant();
-        return _db.Estado
+        return db.Estado
             .Where(e => e.Nombre.Trim().ToLower() == target)
             .Select(e => (long?)e.Id)
             .FirstOrDefaultAsync();
     }
 
-    private async Task AsignarEstadoAsync(Activo activo, string estadoNombre)
+    private static async Task AsignarEstadoAsync(AppDbContext db, Activo activo, string estadoNombre)
     {
-        var estadoId = await BuscarEstadoIdPorNombreAsync(estadoNombre);
+        var estadoId = await BuscarEstadoIdPorNombreAsync(db, estadoNombre);
         if (estadoId is long id && activo.EstadoId != id)
         {
             activo.EstadoId = id;

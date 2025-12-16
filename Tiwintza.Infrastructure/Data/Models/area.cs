@@ -1,14 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+using Tiwintza.Infrastructure.Data;
 
 namespace Tiwintza.Infrastructure.Data.Models;
 
 [Table("area")]
-[Index("Nombre", "AreaPadreId", Name = "uq_area", IsUnique = true)]
-public partial class Area
+public partial class Area : ISedeScoped
 {
     [Key]
     [Column("id")]
@@ -16,6 +15,8 @@ public partial class Area
 
     [Column("nombre")]
     public string Nombre { get; set; } = null!;
+
+    public Guid SedeId { get; set; }
 
     [Column("area_padre_id")]
     public long? AreaPadreId { get; set; }

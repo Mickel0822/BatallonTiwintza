@@ -13,21 +13,23 @@ namespace Tiwintza.Infrastructure.Services;
 
 public sealed class ExistenciasService : IExistenciasService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _dbFactory;
 
-    public ExistenciasService(AppDbContext db)
+    public ExistenciasService(IDbContextFactory<AppDbContext> dbFactory)
     {
-        _db = db;
+        _dbFactory = dbFactory;
     }
 
     public async Task<PagedResult<ExistenciaListItemDto>> BuscarAsync(ExistenciaFiltro filtro, CancellationToken ct = default)
     {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
         filtro ??= new ExistenciaFiltro();
 
         var page = filtro.Page <= 0 ? 1 : filtro.Page;
         var pageSize = filtro.PageSize <= 0 ? 30 : Math.Clamp(filtro.PageSize, 5, 200);
 
-        IQueryable<Existencia> query = _db.Existencia
+        IQueryable<Existencia> query = db.Existencia
             .AsNoTracking()
             .Include(e => e.ProveedorPref);
 
@@ -100,9 +102,11 @@ public sealed class ExistenciasService : IExistenciasService
 
     public async Task<IReadOnlyList<ExistenciaExcelDto>> ExportarAsync(ExistenciaFiltro filtro, CancellationToken ct = default)
     {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
         filtro ??= new ExistenciaFiltro();
 
-        IQueryable<Existencia> query = _db.Existencia
+        IQueryable<Existencia> query = db.Existencia
             .AsNoTracking()
             .Include(e => e.ProveedorPref);
 
@@ -167,7 +171,9 @@ public sealed class ExistenciasService : IExistenciasService
 
     public async Task<ExistenciaListItemDto?> ObtenerAsync(long id, CancellationToken ct = default)
     {
-        var item = await _db.Existencia
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        var item = await db.Existencia
             .AsNoTracking()
             .Include(e => e.ProveedorPref)
             .Where(e => e.Id == id)

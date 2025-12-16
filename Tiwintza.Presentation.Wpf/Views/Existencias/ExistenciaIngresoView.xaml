@@ -184,12 +184,18 @@
 
                             <StackPanel Grid.Column="1" Orientation="Vertical" Margin="12,0,0,0">
                                 <TextBlock Text="Cantidad" Style="{StaticResource Caption}"/>
-                                <TextBox Style="{StaticResource InputTextBox}" Text="{Binding ProductoCantidad, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBox Style="{StaticResource InputTextBox}" 
+                                         Text="{Binding ProductoCantidad, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
+                                         PreviewTextInput="ValidarSoloEnteros" 
+                                         MaxLength="6"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="2" Orientation="Vertical" Margin="12,0,0,0">
                                 <TextBlock Text="Costo unitario" Style="{StaticResource Caption}"/>
-                                <TextBox Style="{StaticResource InputTextBox}" Text="{Binding ProductoCostoUnitario, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBox Style="{StaticResource InputTextBox}" 
+                                         Text="{Binding ProductoCostoUnitario, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
+                                         PreviewTextInput="ValidarDecimales"
+                                         MaxLength="10"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="3" Orientation="Vertical" Margin="16,0,0,0" VerticalAlignment="Bottom">
@@ -256,12 +262,12 @@
                                     <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,12,0">
                                         <TextBlock Text="Nivel maximo" Style="{StaticResource Caption}"/>
                                         <TextBox Style="{StaticResource InputTextBox}"
-                                                 Text="{Binding NuevoProductoNivelMaximo, UpdateSourceTrigger=PropertyChanged}"/>
+                                                 Text="{Binding NuevoProductoNivelMaximo, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Vertical">
                                         <TextBlock Text="Nivel seguridad" Style="{StaticResource Caption}"/>
                                         <TextBox Style="{StaticResource InputTextBox}"
-                                                 Text="{Binding NuevoProductoNivelSeguridad, UpdateSourceTrigger=PropertyChanged}"/>
+                                                 Text="{Binding NuevoProductoNivelSeguridad, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"/>
                                     </StackPanel>
                                 </Grid>
 
@@ -273,12 +279,12 @@
                                     <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,12,0">
                                         <TextBlock Text="Nivel minimo" Style="{StaticResource Caption}"/>
                                         <TextBox Style="{StaticResource InputTextBox}"
-                                                 Text="{Binding NuevoProductoNivelMinimo, UpdateSourceTrigger=PropertyChanged}"/>
+                                                 Text="{Binding NuevoProductoNivelMinimo, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Vertical">
                                         <TextBlock Text="Nivel critico" Style="{StaticResource Caption}"/>
                                         <TextBox Style="{StaticResource InputTextBox}"
-                                                 Text="{Binding NuevoProductoNivelCritico, UpdateSourceTrigger=PropertyChanged}"/>
+                                                 Text="{Binding NuevoProductoNivelCritico, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"/>
                                     </StackPanel>
                                 </Grid>
 

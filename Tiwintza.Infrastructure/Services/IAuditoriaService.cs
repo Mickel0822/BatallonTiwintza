@@ -11,4 +11,5 @@ public interface IAuditoriaService
     Task<AuditoriaCatalogosDto> ObtenerCatalogosAsync(CancellationToken ct = default);
     Task<PagedResult<AuditoriaListItemDto>> BuscarAsync(AuditoriaFiltroDto filtro, CancellationToken ct = default);
     Task<IReadOnlyList<AuditoriaListItemDto>> ExportarAsync(AuditoriaFiltroDto filtro, CancellationToken ct = default);
+    Task<PagedResult<AuditoriaGroupedDto>> BuscarAgrupadasAsync(AuditoriaFiltroDto filtro, CancellationToken ct = default);
 }

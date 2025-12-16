@@ -1,17 +1,17 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using Tiwintza.Infrastructure.Data;
 
 namespace Tiwintza.Infrastructure.Data.Models;
 
 [Table("activo")]
-[Index("CodigoInventario", Name = "activo_codigo_inventario_key", IsUnique = true)]
 [Index("AreaId", Name = "idx_activo_area")]
 [Index("EstadoId", Name = "idx_activo_estado")]
 [Index("TipoId", Name = "idx_activo_tipo")]
-public partial class Activo
+public partial class Activo : ISedeScoped
 {
     [Key]
     [Column("id")]
@@ -78,6 +78,10 @@ public partial class Activo
 
     [Column("observaciones")]
     public string? Observaciones { get; set; }
+
+    public Guid SedeId { get; set; }
+
+
 
     [Column("creado_en")]
     public DateTime CreadoEn { get; set; }

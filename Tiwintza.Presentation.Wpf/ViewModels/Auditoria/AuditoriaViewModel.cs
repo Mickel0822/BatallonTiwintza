@@ -21,7 +21,7 @@ public sealed partial class AuditoriaViewModel : ObservableObject
     public AuditoriaViewModel(IAuditoriaService service)
     {
         _service = service;
-        Items = new ObservableCollection<AuditoriaItemModel>();
+        Items = new ObservableCollection<AuditGroupItemViewModel>();
         Usuarios = new ObservableCollection<SelectOption>();
         Entidades = new ObservableCollection<SelectOption>();
         Acciones = new ObservableCollection<SelectOption>();
@@ -31,7 +31,7 @@ public sealed partial class AuditoriaViewModel : ObservableObject
         SortBy = "fecha";
     }
 
-    public ObservableCollection<AuditoriaItemModel> Items { get; }
+    public ObservableCollection<AuditGroupItemViewModel> Items { get; }
     public ObservableCollection<SelectOption> Usuarios { get; }
     public ObservableCollection<SelectOption> Entidades { get; }
     public ObservableCollection<SelectOption> Acciones { get; }
@@ -182,6 +182,12 @@ public sealed partial class AuditoriaViewModel : ObservableObject
         }
     }
 
+    [RelayCommand]
+    private void Seleccionar(AuditoriaItemModel? item)
+    {
+        Seleccionado = item;
+    }
+
     partial void OnSeleccionadoChanged(AuditoriaItemModel? value)
     {
         if (value?.DetalleJson is null)
@@ -233,12 +239,12 @@ public sealed partial class AuditoriaViewModel : ObservableObject
             }
             AccionSeleccionada = Acciones.FirstOrDefault();
         }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-            MostrarNotificacion("Error al cargar catalogos", ex.Message, true);
-        }
-
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+            MostrarNotificacion("Error al cargar catalogos", ex.Message, true);
+        }
+
         finally
         {
             IsBusy = false;
@@ -253,12 +259,12 @@ public sealed partial class AuditoriaViewModel : ObservableObject
             ErrorMessage = null;
 
             var filtro = CrearFiltro(includePaging: true);
-            var resultado = await _service.BuscarAsync(filtro);
+            var resultado = await _service.BuscarAgrupadasAsync(filtro);
 
             Items.Clear();
             foreach (var item in resultado.Items)
             {
-                Items.Add(new AuditoriaItemModel(item));
+                Items.Add(new AuditGroupItemViewModel(item));
             }
 
             Total = resultado.Total;

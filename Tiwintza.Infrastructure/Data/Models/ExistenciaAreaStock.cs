@@ -1,14 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using Tiwintza.Infrastructure.Data;
 
 namespace Tiwintza.Infrastructure.Data.Models;
 
 [Table("existencia_area_stock")]
 [Index("ExistenciaId", "AreaId", Name = "uq_exi_area", IsUnique = true)]
-public partial class ExistenciaAreaStock
+public partial class ExistenciaAreaStock : ISedeScoped
 {
     [Key]
     [Column("id")]
@@ -22,6 +23,10 @@ public partial class ExistenciaAreaStock
 
     [Column("stock_area")]
     public int StockArea { get; set; }
+
+    public Guid SedeId { get; set; }
+
+
 
     [ForeignKey("AreaId")]
     [InverseProperty("ExistenciaAreaStock")]

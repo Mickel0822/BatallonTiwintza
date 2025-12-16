@@ -1,13 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using Tiwintza.Infrastructure.Data;
 
 namespace Tiwintza.Infrastructure.Data.Models;
 
 [Table("traslado_activo")]
-public partial class TrasladoActivo
+public partial class TrasladoActivo : ISedeScoped
 {
     [Key]
     [Column("id")]
@@ -30,6 +31,8 @@ public partial class TrasladoActivo
 
     [Column("usuario")]
     public string? Usuario { get; set; }
+
+    public Guid SedeId { get; set; }
 
     [Column("creado_en")]
     public DateTime CreadoEn { get; set; }

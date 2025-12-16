@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 
 namespace Tiwintza.Infrastructure.Dtos.Auth;
 
@@ -10,4 +11,5 @@ public sealed class UserCreateDto
     public string Password { get; set; } = string.Empty;
     public Guid RoleId { get; set; }
     public bool IsActive { get; set; } = true;
+    public IReadOnlyList<Guid> SedeIds { get; set; } = Array.Empty<Guid>();
 }

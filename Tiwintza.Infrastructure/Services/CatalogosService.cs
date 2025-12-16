@@ -13,16 +13,18 @@ namespace Tiwintza.Infrastructure.Services;
 
 public sealed class CatalogosService : ICatalogosService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _dbFactory;
 
-    public CatalogosService(AppDbContext db)
+    public CatalogosService(IDbContextFactory<AppDbContext> dbFactory)
     {
-        _db = db;
+        _dbFactory = dbFactory;
     }
 
     public async Task<IReadOnlyList<CatalogoItemDto>> ObtenerAreasAsync(CancellationToken ct = default)
     {
-        return await _db.Area.AsNoTracking()
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        return await db.Area.AsNoTracking()
             .OrderBy(a => a.Nombre)
             .Select(a => new CatalogoItemDto { Id = a.Id, Nombre = a.Nombre })
             .ToListAsync(ct);
@@ -30,43 +32,49 @@ public sealed class CatalogosService : ICatalogosService
 
     public async Task<CatalogoItemDto> CrearAreaAsync(string nombre, CancellationToken ct = default)
     {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
         nombre = NormalizeNombre(nombre);
 
-        if (await _db.Area.AnyAsync(a => a.Nombre.ToLower() == nombre.ToLower(), ct))
+        if (await db.Area.AnyAsync(a => a.Nombre.ToLower() == nombre.ToLower(), ct))
             throw new DuplicateCodeException("Ya existe un área con ese nombre.");
 
         var area = new Area { Nombre = nombre };
-        _db.Area.Add(area);
-        await _db.SaveChangesAsync(ct);
+        db.Area.Add(area);
+        await db.SaveChangesAsync(ct);
 
         return new CatalogoItemDto { Id = area.Id, Nombre = area.Nombre };
     }
 
     public async Task<CatalogoItemDto> ActualizarAreaAsync(long id, string nombre, CancellationToken ct = default)
     {
-        var area = await _db.Area.FirstOrDefaultAsync(a => a.Id == id, ct)
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        var area = await db.Area.FirstOrDefaultAsync(a => a.Id == id, ct)
                    ?? throw new KeyNotFoundException("Área no encontrada.");
 
         nombre = NormalizeNombre(nombre);
 
-        if (await _db.Area.AnyAsync(a => a.Id != id && a.Nombre.ToLower() == nombre.ToLower(), ct))
+        if (await db.Area.AnyAsync(a => a.Id != id && a.Nombre.ToLower() == nombre.ToLower(), ct))
             throw new DuplicateCodeException("Ya existe un área con ese nombre.");
 
         area.Nombre = nombre;
-        await _db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
 
         return new CatalogoItemDto { Id = area.Id, Nombre = area.Nombre };
     }
 
     public async Task EliminarAreaAsync(long id, CancellationToken ct = default)
     {
-        var area = await _db.Area.FirstOrDefaultAsync(a => a.Id == id, ct)
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        var area = await db.Area.FirstOrDefaultAsync(a => a.Id == id, ct)
                    ?? throw new KeyNotFoundException("Área no encontrada.");
 
-        _db.Area.Remove(area);
+        db.Area.Remove(area);
         try
         {
-            await _db.SaveChangesAsync(ct);
+            await db.SaveChangesAsync(ct);
         }
         catch (DbUpdateException ex)
         {
@@ -76,7 +84,9 @@ public sealed class CatalogosService : ICatalogosService
 
     public async Task<IReadOnlyList<CatalogoItemDto>> ObtenerTiposAsync(CancellationToken ct = default)
     {
-        return await _db.TipoBien.AsNoTracking()
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        return await db.TipoBien.AsNoTracking()
             .OrderBy(t => t.Nombre)
             .Select(t => new CatalogoItemDto { Id = t.Id, Nombre = t.Nombre })
             .ToListAsync(ct);
@@ -84,43 +94,49 @@ public sealed class CatalogosService : ICatalogosService
 
     public async Task<CatalogoItemDto> CrearTipoAsync(string nombre, CancellationToken ct = default)
     {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
         nombre = NormalizeNombre(nombre);
 
-        if (await _db.TipoBien.AnyAsync(t => t.Nombre.ToLower() == nombre.ToLower(), ct))
+        if (await db.TipoBien.AnyAsync(t => t.Nombre.ToLower() == nombre.ToLower(), ct))
             throw new DuplicateCodeException("Ya existe un tipo con ese nombre.");
 
         var tipo = new TipoBien { Nombre = nombre };
-        _db.TipoBien.Add(tipo);
-        await _db.SaveChangesAsync(ct);
+        db.TipoBien.Add(tipo);
+        await db.SaveChangesAsync(ct);
 
         return new CatalogoItemDto { Id = tipo.Id, Nombre = tipo.Nombre };
     }
 
     public async Task<CatalogoItemDto> ActualizarTipoAsync(long id, string nombre, CancellationToken ct = default)
     {
-        var tipo = await _db.TipoBien.FirstOrDefaultAsync(t => t.Id == id, ct)
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        var tipo = await db.TipoBien.FirstOrDefaultAsync(t => t.Id == id, ct)
                    ?? throw new KeyNotFoundException("Tipo no encontrado.");
 
         nombre = NormalizeNombre(nombre);
 
-        if (await _db.TipoBien.AnyAsync(t => t.Id != id && t.Nombre.ToLower() == nombre.ToLower(), ct))
+        if (await db.TipoBien.AnyAsync(t => t.Id != id && t.Nombre.ToLower() == nombre.ToLower(), ct))
             throw new DuplicateCodeException("Ya existe un tipo con ese nombre.");
 
         tipo.Nombre = nombre;
-        await _db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
 
         return new CatalogoItemDto { Id = tipo.Id, Nombre = tipo.Nombre };
     }
 
     public async Task EliminarTipoAsync(long id, CancellationToken ct = default)
     {
-        var tipo = await _db.TipoBien.FirstOrDefaultAsync(t => t.Id == id, ct)
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        var tipo = await db.TipoBien.FirstOrDefaultAsync(t => t.Id == id, ct)
                    ?? throw new KeyNotFoundException("Tipo no encontrado.");
 
-        _db.TipoBien.Remove(tipo);
+        db.TipoBien.Remove(tipo);
         try
         {
-            await _db.SaveChangesAsync(ct);
+            await db.SaveChangesAsync(ct);
         }
         catch (DbUpdateException ex)
         {
@@ -130,7 +146,9 @@ public sealed class CatalogosService : ICatalogosService
 
     public async Task<IReadOnlyList<ProveedorDetalleDto>> ObtenerProveedoresAsync(CancellationToken ct = default)
     {
-        return await _db.Proveedor.AsNoTracking()
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        return await db.Proveedor.AsNoTracking()
             .OrderBy(p => p.RazonSocial)
             .Select(p => new ProveedorDetalleDto
             {
@@ -146,9 +164,11 @@ public sealed class CatalogosService : ICatalogosService
 
     public async Task<ProveedorDetalleDto> CrearProveedorAsync(ProveedorUpsertDto dto, CancellationToken ct = default)
     {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
         var (ruc, razon) = NormalizeProveedor(dto);
 
-        if (await _db.Proveedor.AnyAsync(p => p.Ruc == ruc, ct))
+        if (await db.Proveedor.AnyAsync(p => p.Ruc == ruc, ct))
             throw new DuplicateCodeException("Ya existe un proveedor con ese RUC.");
 
         var proveedor = new Proveedor
@@ -160,20 +180,22 @@ public sealed class CatalogosService : ICatalogosService
             Email = dto.Email?.Trim()
         };
 
-        _db.Proveedor.Add(proveedor);
-        await _db.SaveChangesAsync(ct);
+        db.Proveedor.Add(proveedor);
+        await db.SaveChangesAsync(ct);
 
         return MapProveedor(proveedor);
     }
 
     public async Task<ProveedorDetalleDto> ActualizarProveedorAsync(long id, ProveedorUpsertDto dto, CancellationToken ct = default)
     {
-        var proveedor = await _db.Proveedor.FirstOrDefaultAsync(p => p.Id == id, ct)
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        var proveedor = await db.Proveedor.FirstOrDefaultAsync(p => p.Id == id, ct)
                          ?? throw new KeyNotFoundException("Proveedor no encontrado.");
 
         var (ruc, razon) = NormalizeProveedor(dto);
 
-        if (await _db.Proveedor.AnyAsync(p => p.Id != id && p.Ruc == ruc, ct))
+        if (await db.Proveedor.AnyAsync(p => p.Id != id && p.Ruc == ruc, ct))
             throw new DuplicateCodeException("Ya existe un proveedor con ese RUC.");
 
         proveedor.Ruc = ruc;
@@ -182,20 +204,22 @@ public sealed class CatalogosService : ICatalogosService
         proveedor.Telefono = dto.Telefono?.Trim();
         proveedor.Email = dto.Email?.Trim();
 
-        await _db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
 
         return MapProveedor(proveedor);
     }
 
     public async Task EliminarProveedorAsync(long id, CancellationToken ct = default)
     {
-        var proveedor = await _db.Proveedor.FirstOrDefaultAsync(p => p.Id == id, ct)
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        var proveedor = await db.Proveedor.FirstOrDefaultAsync(p => p.Id == id, ct)
                          ?? throw new KeyNotFoundException("Proveedor no encontrado.");
 
-        _db.Proveedor.Remove(proveedor);
+        db.Proveedor.Remove(proveedor);
         try
         {
-            await _db.SaveChangesAsync(ct);
+            await db.SaveChangesAsync(ct);
         }
         catch (DbUpdateException ex)
         {

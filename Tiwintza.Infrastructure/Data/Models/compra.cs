@@ -1,14 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using Tiwintza.Infrastructure.Data;
 
 namespace Tiwintza.Infrastructure.Data.Models;
 
 [Table("compra")]
-[Index("ProveedorId", "NumFactura", Name = "uq_compra_factura", IsUnique = true)]
-public partial class Compra
+public partial class Compra : ISedeScoped
 {
     [Key]
     [Column("id")]
@@ -31,6 +31,8 @@ public partial class Compra
     [Column("area_id_destino")]
     public long? AreaIdDestino { get; set; }
 
+
+    public Guid SedeId { get; set; }
     [Column("creado_en")]
     public DateTime CreadoEn { get; set; }
 

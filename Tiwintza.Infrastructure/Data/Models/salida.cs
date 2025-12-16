@@ -1,15 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using Tiwintza.Infrastructure.Data;
 
 namespace Tiwintza.Infrastructure.Data.Models;
 
 [Table("salida")]
 [Index("AreaId", Name = "idx_salida_area")]
 [Index("ExistenciaId", Name = "idx_salida_exi")]
-public partial class Salida
+public partial class Salida : ISedeScoped
 {
     [Key]
     [Column("id")]
@@ -32,6 +33,8 @@ public partial class Salida
 
     [Column("observacion")]
     public string? Observacion { get; set; }
+
+    public Guid SedeId { get; set; }
 
     [Column("creado_en")]
     public DateTime CreadoEn { get; set; }

@@ -6,7 +6,9 @@ using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Markup;
+using Tiwintza.Infrastructure.Common;
 using Tiwintza.Infrastructure.Data;
+using Tiwintza.Infrastructure.Data.Interceptors;
 using Tiwintza.Infrastructure.Services;
 using Tiwintza.Infrastructure.Services.Auth;
 using Tiwintza.Presentation.Wpf.Services;
@@ -69,8 +71,25 @@ namespace Tiwintza.Presentation.Wpf
                             $"Falta la cadena de conexión 'ConnectionStrings:AppDb' (o 'MainDb'). " +
                             $"Revise/edite el archivo: {ExternalConfigPath}");
 
-                    services.AddDbContext<AppDbContext>(opt =>
-                        opt.UseNpgsql(connString));
+                    services.AddSingleton<ITenantAccessor, TenantAccessor>();
+                    services.AddSingleton<IAppUserAccessor, AppUserAccessor>();
+                    services.AddSingleton<AppUserConnectionInterceptor>();
+
+                    void ConfigureAppDbContext(IServiceProvider sp, DbContextOptionsBuilder opt)
+                    {
+                        opt.UseNpgsql(connString);
+
+                        if (ctx.HostingEnvironment.IsDevelopment())
+                        {
+                            opt.EnableDetailedErrors();
+                            opt.EnableSensitiveDataLogging();
+                        }
+
+                        opt.AddInterceptors(sp.GetRequiredService<AppUserConnectionInterceptor>());
+                    }
+
+                    services.AddDbContext<AppDbContext>(ConfigureAppDbContext);
+                    services.AddDbContextFactory<AppDbContext>(ConfigureAppDbContext);
 
                     // --- INICIO DE SERVICIOS DE INFRASTRUCTURE  ----
                     services.AddScoped<IAuthService, AuthService>();
@@ -108,7 +127,8 @@ namespace Tiwintza.Presentation.Wpf
                     services.AddSingleton<MainViewModel>(sp =>
                         new MainViewModel(
                             sp.GetRequiredService<INavigationCoordinator>(),
-                            sp.GetRequiredService<IAuthService>(),
+                            sp.GetRequiredService<IAuthService>(),
+                            sp.GetRequiredService<ITenantAccessor>(),
                             () => sp.GetRequiredService<DashboardViewModel>(),
                             () => sp.GetRequiredService<ActivosListViewModel>(),
                             () => sp.GetRequiredService<ExistenciasListViewModel>(),
@@ -135,7 +155,8 @@ namespace Tiwintza.Presentation.Wpf
             try
             {
                 using var scope = AppHost.Services.CreateScope();
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+                await using var db = await factory.CreateDbContextAsync();
 
                 // Abrimos/cerramos explícitamente para obtener errores claros
                 await db.Database.OpenConnectionAsync();

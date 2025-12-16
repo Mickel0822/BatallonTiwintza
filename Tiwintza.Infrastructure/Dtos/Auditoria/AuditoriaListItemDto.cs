@@ -12,4 +12,6 @@ public sealed class AuditoriaListItemDto
     public long? EntidadId { get; set; }
     public string? Resumen { get; set; }
     public string? DetalleJson { get; set; }
+    public string? TransactionId { get; set; }
+    public string? AccionUsuario { get; set; }
 }

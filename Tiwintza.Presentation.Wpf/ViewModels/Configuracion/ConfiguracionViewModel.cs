@@ -2,7 +2,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,6 +20,11 @@ public sealed partial class ConfiguracionViewModel : ObservableObject
     private bool _initialized;
     private string? _nuevoPassword;
     private string? _confirmPassword;
+    private bool _suspendSelectAllPropagation;
+    
+    private bool _suspendItemSelectionSync;
+    private Guid? _usuarioEnEdicionId;
+
 
     public ConfiguracionViewModel(IUsuariosService usuariosService, IAuthService authService)
     {
@@ -31,16 +38,23 @@ public sealed partial class ConfiguracionViewModel : ObservableObject
     public ObservableCollection<UsuarioItemViewModel> Usuarios { get; } = new();
     public ObservableCollection<RoleOptionViewModel> Roles { get; } = new();
 
+    public ObservableCollection<SedeOptionViewModel> Sedes { get; } = new();
+
     [ObservableProperty] private bool isBusy;
     [ObservableProperty] private bool isDialogBusy;
     [ObservableProperty] private bool isNuevoUsuarioAbierto;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(TituloDialogo))] private bool isEditing;
     [ObservableProperty] private string? mensajeDialogo;
     [ObservableProperty] private string? errorMessage;
     [ObservableProperty] private string? nuevoNombreCompleto;
     [ObservableProperty] private string? nuevoUsername;
     [ObservableProperty] private string? nuevoEmail;
     [ObservableProperty] private RoleOptionViewModel? rolSeleccionado;
+
+    [ObservableProperty] private bool todasLasSedesSeleccionadas;
     [ObservableProperty] private bool nuevoUsuarioActivo = true;
+    
+    public string TituloDialogo => IsEditing ? "Editar usuario" : "Registrar usuario";
 
     public bool TieneAccesoAdministrador { get; }
 
@@ -58,6 +72,7 @@ public sealed partial class ConfiguracionViewModel : ObservableObject
         }
 
         await CargarRolesAsync();
+        await CargarSedesAsync();
         await CargarUsuariosAsync();
     }
 
@@ -66,6 +81,7 @@ public sealed partial class ConfiguracionViewModel : ObservableObject
     {
         if (!TieneAccesoAdministrador) return;
         await CargarUsuariosAsync();
+        await CargarSedesAsync();
     }
 
     [RelayCommand]
@@ -75,6 +91,56 @@ public sealed partial class ConfiguracionViewModel : ObservableObject
         LimpiarFormulario();
         IsNuevoUsuarioAbierto = true;
         SolicitarLimpiarFormulario?.Invoke();
+    }
+
+    [RelayCommand]
+    private async Task EditarUsuarioAsync(UsuarioItemViewModel item)
+    {
+        if (!TieneAccesoAdministrador) return;
+        
+        try
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            
+            var dto = await _usuariosService.ObtenerUsuarioParaEditarAsync(item.Id);
+            if (dto == null)
+            {
+                ErrorMessage = "El usuario no existe o fue eliminado.";
+                await CargarUsuariosAsync();
+                return;
+            }
+
+            LimpiarFormulario(); // Reset state
+            
+            _usuarioEnEdicionId = dto.Id;
+            IsEditing = true;
+            
+            NuevoNombreCompleto = dto.NombreCompleto;
+            NuevoUsername = dto.Username;
+            NuevoEmail = dto.Email;
+            NuevoUsuarioActivo = dto.IsActive;
+            
+            RolSeleccionado = Roles.FirstOrDefault(r => r.Id == dto.RoleId);
+            
+            _suspendItemSelectionSync = true;
+            foreach (var sede in Sedes)
+            {
+                sede.IsSelected = dto.SedeIds.Contains(sede.Id);
+            }
+            _suspendItemSelectionSync = false;
+            SincronizarSeleccionGeneral();
+            
+            IsNuevoUsuarioAbierto = true;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     [RelayCommand]
@@ -110,33 +176,67 @@ public sealed partial class ConfiguracionViewModel : ObservableObject
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(_nuevoPassword) || _nuevoPassword!.Length < 6)
+        var sedesSeleccionadas = Sedes.Where(s => s.IsSelected).Select(s => s.Id).ToArray();
+        if (sedesSeleccionadas.Length == 0)
         {
-            MensajeDialogo = "La contrase?a debe tener al menos 6 caracteres.";
+            MensajeDialogo = "Seleccione al menos una sede.";
             return;
         }
 
-        if (!string.Equals(_nuevoPassword, _confirmPassword, StringComparison.Ordinal))
+        if (!IsEditing && (string.IsNullOrWhiteSpace(_nuevoPassword) || _nuevoPassword!.Length < 6))
         {
-            MensajeDialogo = "La confirmaci?n de la contrase?a no coincide.";
+            MensajeDialogo = "La contraseña debe tener al menos 6 caracteres.";
             return;
         }
 
-        var dto = new UserCreateDto
+        if ((!string.IsNullOrWhiteSpace(_nuevoPassword) || !string.IsNullOrWhiteSpace(_confirmPassword)) && 
+            !string.Equals(_nuevoPassword, _confirmPassword, StringComparison.Ordinal))
         {
-            NombreCompleto = NuevoNombreCompleto.Trim(),
-            Username = NuevoUsername.Trim(),
-            Email = string.IsNullOrWhiteSpace(NuevoEmail) ? null : NuevoEmail!.Trim(),
-            Password = _nuevoPassword!,
-            RoleId = RolSeleccionado.Id,
-            IsActive = NuevoUsuarioActivo
-        };
+            MensajeDialogo = "La confirmación de la contraseña no coincide.";
+            return;
+        }
 
         try
         {
             IsDialogBusy = true;
-            var creado = await _usuariosService.CrearUsuarioAsync(dto);
-            InsertarOrdenado(UsuarioItemViewModel.FromDto(creado));
+            
+            if (IsEditing)
+            {
+                 var updateDto = new UserUpdateDto
+                 {
+                     Id = _usuarioEnEdicionId!.Value,
+                     NombreCompleto = NuevoNombreCompleto.Trim(),
+                     Username = NuevoUsername.Trim(),
+                     Email = string.IsNullOrWhiteSpace(NuevoEmail) ? null : NuevoEmail!.Trim(),
+                     Password = _nuevoPassword,
+                     RoleId = RolSeleccionado.Id,
+                     IsActive = NuevoUsuarioActivo,
+                     SedeIds = sedesSeleccionadas
+                 };
+                 
+                 var updated = await _usuariosService.ActualizarUsuarioAsync(updateDto);
+                 
+                 var oldItem = Usuarios.FirstOrDefault(u => u.Id == updated.Id);
+                 if (oldItem != null) Usuarios.Remove(oldItem);
+                 InsertarOrdenado(UsuarioItemViewModel.FromDto(updated));
+            }
+            else
+            {
+                var createDto = new UserCreateDto
+                {
+                    NombreCompleto = NuevoNombreCompleto.Trim(),
+                    Username = NuevoUsername.Trim(),
+                    Email = string.IsNullOrWhiteSpace(NuevoEmail) ? null : NuevoEmail!.Trim(),
+                    Password = _nuevoPassword!,
+                    RoleId = RolSeleccionado.Id,
+                    IsActive = NuevoUsuarioActivo,
+                    SedeIds = sedesSeleccionadas
+                };
+                
+                var creado = await _usuariosService.CrearUsuarioAsync(createDto);
+                InsertarOrdenado(UsuarioItemViewModel.FromDto(creado));
+            }
+
             IsNuevoUsuarioAbierto = false;
             LimpiarFormulario();
             SolicitarLimpiarFormulario?.Invoke();
@@ -197,6 +297,64 @@ public sealed partial class ConfiguracionViewModel : ObservableObject
         }
     }
 
+    private async Task CargarSedesAsync()
+    {
+        try
+        {
+            foreach (var sede in Sedes)
+            {
+                sede.PropertyChanged -= OnSedeOptionPropertyChanged;
+            }
+
+            Sedes.Clear();
+
+            var sedes = await _usuariosService.ObtenerSedesAsync();
+            foreach (var sede in sedes)
+            {
+                var sedeVm = new SedeOptionViewModel(sede.Id, sede.Nombre);
+                sedeVm.PropertyChanged += OnSedeOptionPropertyChanged;
+                Sedes.Add(sedeVm);
+            }
+
+            _suspendSelectAllPropagation = false;
+            _suspendItemSelectionSync = false;
+            SincronizarSeleccionGeneral();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private void OnSedeOptionPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SedeOptionViewModel.IsSelected))
+        {
+            SincronizarSeleccionGeneral();
+        }
+    }
+
+    private void SincronizarSeleccionGeneral()
+    {
+        if (_suspendItemSelectionSync) return;
+
+        _suspendSelectAllPropagation = true;
+        TodasLasSedesSeleccionadas = Sedes.Count > 0 && Sedes.All(s => s.IsSelected);
+        _suspendSelectAllPropagation = false;
+    }
+
+    partial void OnTodasLasSedesSeleccionadasChanged(bool value)
+    {
+        if (_suspendSelectAllPropagation) return;
+
+        _suspendItemSelectionSync = true;
+        foreach (var sede in Sedes)
+        {
+            sede.IsSelected = value;
+        }
+        _suspendItemSelectionSync = false;
+    }
+
     private void LimpiarFormulario()
     {
         NuevoNombreCompleto = null;
@@ -206,7 +364,10 @@ public sealed partial class ConfiguracionViewModel : ObservableObject
         RolSeleccionado = Roles.FirstOrDefault();
         _nuevoPassword = null;
         _confirmPassword = null;
+        TodasLasSedesSeleccionadas = false;
         MensajeDialogo = null;
+        _usuarioEnEdicionId = null;
+        IsEditing = false;
     }
 
     private void InsertarOrdenado(UsuarioItemViewModel item)
@@ -228,6 +389,24 @@ public sealed partial class ConfiguracionViewModel : ObservableObject
     {
         public override string ToString() => Nombre;
     }
+
+    public sealed partial class SedeOptionViewModel : ObservableObject
+    {
+        public SedeOptionViewModel(Guid id, string nombre)
+        {
+            Id = id;
+            Nombre = nombre;
+        }
+
+        public Guid Id { get; }
+        public string Nombre { get; }
+
+        [ObservableProperty] private bool isSelected;
+
+        public override string ToString() => Nombre;
+    }
+
+
 
     public sealed record UsuarioItemViewModel(Guid Id,
                                               string Username,
@@ -255,3 +434,11 @@ public sealed partial class ConfiguracionViewModel : ObservableObject
         }
     }
 }
+
+
+
+
+
+
+
+
