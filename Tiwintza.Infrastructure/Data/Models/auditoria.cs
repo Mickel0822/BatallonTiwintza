@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -30,4 +30,13 @@ public partial class Auditoria
 
     [Column("detalle", TypeName = "jsonb")]
     public string? Detalle { get; set; }
+
+    [Column("sede_id")]
+    public Guid? SedeId { get; set; }
+
+    [Column("transaction_id")]
+    public string? TransactionId { get; set; }
+
+    [Column("accion_usuario")]
+    public string? AccionUsuario { get; set; }
 }

@@ -1,6 +1,8 @@
 ﻿<!-- Styles/Typography.xaml -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Encabezados -->
     <Style x:Key="H1" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="Segoe UI"/>
         <Setter Property="FontSize" Value="24"/>
@@ -17,6 +19,12 @@
         <Setter Property="FontWeight" Value="Medium"/>
     </Style>
 
+    <Style x:Key="H4" TargetType="TextBlock" BasedOn="{StaticResource H1}">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+    </Style>
+
+    <!-- Texto base -->
     <Style x:Key="Body" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="Segoe UI"/>
         <Setter Property="FontSize" Value="14"/>
@@ -27,4 +35,5 @@
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
     </Style>
+
 </ResourceDictionary>

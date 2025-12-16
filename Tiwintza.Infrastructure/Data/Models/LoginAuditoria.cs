@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -29,4 +29,7 @@ public partial class LoginAuditoria
     [ForeignKey("UsuarioId")]
     [InverseProperty("LoginAuditoria")]
     public virtual Usuario? Usuario { get; set; }
+
+    [Column("sede_id")]
+    public Guid? SedeId { get; set; }
 }

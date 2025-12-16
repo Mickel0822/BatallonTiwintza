@@ -1,0 +1,14 @@
+﻿namespace Tiwintza.Infrastructure.Dtos.Existencias;
+
+public sealed class ExistenciaQuickCreateDto
+{
+    public string Codigo { get; set; } = string.Empty;
+    public string Nombre { get; set; } = string.Empty;
+    public string Unidad { get; set; } = string.Empty;
+    public string? Descripcion { get; set; }
+    public int NivelMaximo { get; set; }
+    public int NivelSeguridad { get; set; }
+    public int NivelMinimo { get; set; }
+    public int NivelCritico { get; set; }
+    public long? ProveedorPreferidoId { get; set; }
+}

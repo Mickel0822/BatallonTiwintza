@@ -1,26 +1,21 @@
-﻿<UserControl x:Class="Tiwintza.Presentation.Wpf.Views.Activos.ActivosView"
+<UserControl x:Class="Tiwintza.Presentation.Wpf.Views.Activos.ActivosView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:helpers="clr-namespace:Tiwintza.Presentation.Wpf.Helpers"
-             xmlns:views="clr-namespace:Tiwintza.Presentation.Wpf.Views.Activos"
              xmlns:vm="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Activos"
              mc:Ignorable="d"
-             d:DesignHeight="800" d:DesignWidth="1200"
+             d:DesignHeight="800"
+             d:DesignWidth="1200"
              Loaded="OnLoaded">
 
-    <!-- Renderiza el formulario cuando el Content sea ActivoFormViewModel -->
     <UserControl.Resources>
-        <DataTemplate DataType="{x:Type vm:ActivoFormViewModel}">
-            <views:ActivoFormView/>
-        </DataTemplate>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
 
     <Grid>
-
         <!-- ================= LISTADO ================= -->
         <Grid x:Name="ListadoRoot">
             <Grid.Style>
@@ -43,25 +38,18 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Título + Acciones -->
+                <!-- Titulo + Acciones globales -->
                 <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,12">
                     <TextBlock Text="Activos" Style="{StaticResource H1}" DockPanel.Dock="Left"/>
                     <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                        <Button Style="{StaticResource OutlineButton.Small}" Command="{Binding ExportarExcelAsyncCommand}">
+                        <Button Style="{StaticResource OutlineButton.Small}" HorizontalAlignment="Center" Command="{Binding ExportarExcelCommand}">
                             <StackPanel Orientation="Horizontal">
                                 <iconPacks:PackIconMaterial Kind="FileExcelOutline" Width="16" Height="16" Margin="0,0,8,0"/>
                                 <TextBlock Text="Excel"/>
                             </StackPanel>
                         </Button>
-
-                        <Button Style="{StaticResource OutlineButton.Small}" Command="{Binding ExportarPdfAsyncCommand}" Margin="8,0,0,0">
-                            <StackPanel Orientation="Horizontal">
-                                <iconPacks:PackIconMaterial Kind="FilePdfBox" Width="16" Height="16" Margin="0,0,8,0"/>
-                                <TextBlock Text="PDF"/>
-                            </StackPanel>
-                        </Button>
-
-                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding NuevoAsyncCommand}" Margin="8,0,0,0">
+                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding NuevoCommand}" Margin="8,0,0,0"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
                             <StackPanel Orientation="Horizontal">
                                 <iconPacks:PackIconMaterial Kind="Plus" Width="16" Height="16" Margin="0,0,8,0"/>
                                 <TextBlock Text="Nuevo"/>
@@ -70,97 +58,9 @@
                     </StackPanel>
                 </DockPanel>
 
-                <!-- Filtros -->
-                <Grid Grid.Row="1" Margin="0,0,0,12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="2*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Buscador -->
-                    <TextBox Grid.Column="0"
-                             Style="{StaticResource InputTextBox}"
-                             Tag="Buscar código o nombre"
-                             Text="{Binding Texto, UpdateSourceTrigger=PropertyChanged}"/>
-
-                    <!-- ÁREA -->
-                    <ComboBox Grid.Column="1"
-                              Style="{StaticResource InputComboBox}"
-                              MinWidth="170"
-                              DisplayMemberPath="Nombre"
-                              SelectedValuePath="Id"
-                              SelectedValue="{Binding AreaId, Mode=TwoWay, Converter={StaticResource ZeroToNullLong}}"
-                              Tag="Seleccione un área">
-                        <ComboBox.Resources>
-                            <CollectionViewSource x:Key="AreasView" Source="{Binding Areas}"/>
-                        </ComboBox.Resources>
-                        <ComboBox.ItemsSource>
-                            <CompositeCollection>
-                                <x:Static Member="helpers:UiSentinels.Ninguno"/>
-                                <CollectionContainer Collection="{Binding Source={StaticResource AreasView}}"/>
-                            </CompositeCollection>
-                        </ComboBox.ItemsSource>
-                    </ComboBox>
-
-                    <!-- ESTADO -->
-                    <ComboBox Grid.Column="2"
-                              Style="{StaticResource InputComboBox}"
-                              MinWidth="170"
-                              Tag="Seleccione un estado"
-                              DisplayMemberPath="Nombre"
-                              SelectedValuePath="Id"
-                              SelectedValue="{Binding EstadoId, Mode=TwoWay, Converter={StaticResource ZeroToNullLong}}">
-                        <ComboBox.Resources>
-                            <CollectionViewSource x:Key="EstadosView" Source="{Binding Estados}"/>
-                        </ComboBox.Resources>
-                        <ComboBox.ItemsSource>
-                            <CompositeCollection>
-                                <x:Static Member="helpers:UiSentinels.Ninguno"/>
-                                <CollectionContainer Collection="{Binding Source={StaticResource EstadosView}}"/>
-                            </CompositeCollection>
-                        </ComboBox.ItemsSource>
-                    </ComboBox>
-
-                    <!-- TIPO -->
-                    <ComboBox Grid.Column="3"
-                              Style="{StaticResource InputComboBox}"
-                              MinWidth="170"
-                              Tag="Seleccione un tipo"
-                              DisplayMemberPath="Nombre"
-                              SelectedValuePath="Id"
-                              SelectedValue="{Binding TipoId, Mode=TwoWay, Converter={StaticResource ZeroToNullLong}}">
-                        <ComboBox.Resources>
-                            <CollectionViewSource x:Key="TiposView" Source="{Binding Tipos}"/>
-                        </ComboBox.Resources>
-                        <ComboBox.ItemsSource>
-                            <CompositeCollection>
-                                <x:Static Member="helpers:UiSentinels.Ninguno"/>
-                                <CollectionContainer Collection="{Binding Source={StaticResource TiposView}}"/>
-                            </CompositeCollection>
-                        </ComboBox.ItemsSource>
-                    </ComboBox>
-
-                    <!-- Aplicar -->
-                    <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Right">
-                        <CheckBox Style="{StaticResource SwitchToggle}"
-                                  Content="Incluir baja"
-                                  IsChecked="{Binding IncluirBaja}"
-                                  VerticalAlignment="Center" Margin="0,0,10,0"/>
-                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding AplicarCommand}">
-                            <StackPanel Orientation="Horizontal">
-                                <iconPacks:PackIconMaterial Kind="Magnify" Width="16" Height="16" Margin="0,0,8,0"/>
-                                <TextBlock Text="Aplicar"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-                </Grid>
-
                 <!-- KPIs -->
-                <UniformGrid Grid.Row="2" Rows="1" Columns="3" Margin="0,0,0,12">
-                    <Border Style="{StaticResource Card}">
+                <UniformGrid Grid.Row="1" Columns="3" Margin="0,0,0,24">
+                    <Border Style="{StaticResource Card}" Margin="0,0,12,0">
                         <StackPanel>
                             <TextBlock Text="Total" Style="{StaticResource Caption}"/>
                             <TextBlock Text="{Binding Total}" Style="{StaticResource H1}"/>
@@ -180,15 +80,146 @@
                     </Border>
                 </UniformGrid>
 
+                <!-- Filtros -->
+                <Border Grid.Row="2" Background="White" CornerRadius="12" Padding="16" Margin="0,0,0,12"
+                        BorderBrush="{DynamicResource GridBorderBrush}" BorderThickness="1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Labels -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Búsqueda" Style="{StaticResource Caption}" Margin="0,0,0,4"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Area" Style="{StaticResource Caption}" Margin="0,0,0,4"/>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Tipo" Style="{StaticResource Caption}" Margin="0,0,0,4"/>
+                        <TextBlock Grid.Row="0" Grid.Column="3" Text="Estado" Style="{StaticResource Caption}" Margin="0,0,0,4"/>
+
+                        <!-- Controls -->
+                        <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding TextoBusqueda, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource InputTextBox}" 
+                                 Margin="0,0,12,0">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding BuscarCommand}"/>
+                            </TextBox.InputBindings>
+                        </TextBox>
+
+                        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Areas}" 
+                                  SelectedItem="{Binding AreaSeleccionada}"
+                                  DisplayMemberPath="Nombre"
+                                  Width="180" Margin="0,0,12,0"/>
+
+                        <ComboBox Grid.Row="1" Grid.Column="2" ItemsSource="{Binding Tipos}" 
+                                  SelectedItem="{Binding TipoSeleccionado}"
+                                  DisplayMemberPath="Nombre"
+                                  Width="150" Margin="0,0,12,0"/>
+
+                        <ComboBox Grid.Row="1" Grid.Column="3" ItemsSource="{Binding Estados}" 
+                                  SelectedItem="{Binding EstadoSeleccionado}"
+                                  DisplayMemberPath="Nombre"
+                                  Width="140" Margin="0,0,12,0"/>
+
+                        <!-- Botones -->
+                        <StackPanel Grid.Row="1" Grid.Column="4" Orientation="Horizontal">
+                            <Button Style="{StaticResource PrimaryButton}" Command="{Binding BuscarCommand}" Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <iconPacks:PackIconMaterial Kind="Magnify" Width="16" Height="16" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Buscar"/>
+                                </StackPanel>
+                            </Button>
+                            
+                            <Button Style="{StaticResource OutlineButton}" Command="{Binding LimpiarFiltrosCommand}" ToolTip="Limpiar filtros">
+                                 <iconPacks:PackIconMaterial Kind="FilterOff" Width="16" Height="16"/>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
                 <!-- Tabla -->
-                <DataGrid Grid.Row="3"
+                <DataGrid x:Name="ActivosGrid"
+                          Grid.Row="3"
                           Style="{StaticResource GridTable2025}"
-                          ItemsSource="{Binding Items}">
+                          ItemsSource="{Binding Items}"
+                          MouseDoubleClick="ActivosGrid_MouseDoubleClick"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          RowHeight="40"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto"
+                          AlternatingRowBackground="#FFF3F4F6">
+                    <DataGrid.Resources>
+                        <!-- Centrar contenido de celdas -->
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="Padding" Value="8,6"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                        </Style>
+
+                        <!-- Encabezados centrados (manteniendo look del GridTable2025) -->
+                        <Style x:Key="CenteredColumnHeaderStyle" TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="#FFF9FAFB"/>
+                            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceBrush}"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Padding" Value="10,6"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource GridBorderBrush}"/>
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                            <Setter Property="SnapsToDevicePixels" Value="True"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#FFF1F5F9"/>
+                                </Trigger>
+                                <Trigger Property="SortDirection" Value="Ascending">
+                                    <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+                                </Trigger>
+                                <Trigger Property="SortDirection" Value="Descending">
+                                    <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                        <!-- Texto centrado para celdas de DataGridTextColumn -->
+                        <Style x:Key="CenterCellTextBlock" TargetType="TextBlock">
+                            <Setter Property="TextAlignment" Value="Center"/>
+                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                        </Style>
+                        <Style x:Key="CenterCellTextBox" TargetType="TextBox">
+                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                            <Setter Property="TextAlignment" Value="Center"/>
+                        </Style>
+                    </DataGrid.Resources>
+                    <DataGrid.ColumnHeaderStyle>
+                        <StaticResource ResourceKey="CenteredColumnHeaderStyle"/>
+                    </DataGrid.ColumnHeaderStyle>
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Margin" Value="0,0,0,4"/>
+                            <Setter Property="MinHeight" Value="40"/>
+                        </Style>
+                    </DataGrid.RowStyle>
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="160"/>
-                        <DataGridTextColumn Header="Descripción" Binding="{Binding Nombre}" Width="*"/>
-                        <DataGridTextColumn Header="Área" Binding="{Binding Area}" Width="220"/>
-                        <DataGridTextColumn Header="Tipo" Binding="{Binding Tipo}" Width="180"/>
+                        <DataGridTemplateColumn Header="Acciones" Width="120">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource OutlineButton.Small}" HorizontalAlignment="Center"
+                                            Command="{Binding DataContext.MostrarAccionesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Content="Opciones"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Codigo" Binding="{Binding Codigo}" Width="160" ElementStyle="{StaticResource CenterCellTextBlock}" EditingElementStyle="{StaticResource CenterCellTextBox}"/>
+                        <DataGridTextColumn Header="Descripcion" Binding="{Binding Nombre}" Width="*" MinWidth="260" ElementStyle="{StaticResource CenterCellTextBlock}" EditingElementStyle="{StaticResource CenterCellTextBox}"/>
+                        <DataGridTextColumn Header="Area" Binding="{Binding Area}" Width="220" ElementStyle="{StaticResource CenterCellTextBlock}" EditingElementStyle="{StaticResource CenterCellTextBox}"/>
+                        <DataGridTextColumn Header="Tipo" Binding="{Binding Tipo}" Width="180" ElementStyle="{StaticResource CenterCellTextBlock}" EditingElementStyle="{StaticResource CenterCellTextBox}"/>
                         <DataGridTemplateColumn Header="Estado" Width="160">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -199,8 +230,8 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="Valor" Binding="{Binding Valor, StringFormat={}{0:C}}" Width="130"/>
-                        <DataGridTextColumn Header="Compra" Width="120">
+                        <DataGridTextColumn Header="Valor" Binding="{Binding Valor, StringFormat={}{0:C}}" Width="130" ElementStyle="{StaticResource CenterCellTextBlock}" EditingElementStyle="{StaticResource CenterCellTextBox}"/>
+                        <DataGridTextColumn Header="Compra" Width="120" ElementStyle="{StaticResource CenterCellTextBlock}" EditingElementStyle="{StaticResource CenterCellTextBox}">
                             <DataGridTextColumn.Binding>
                                 <Binding Path="FechaCompra" Converter="{StaticResource DateOnlyToString}"/>
                             </DataGridTextColumn.Binding>
@@ -208,10 +239,10 @@
                     </DataGrid.Columns>
                 </DataGrid>
 
-                <!-- Paginación -->
+                <!-- Paginacion -->
                 <DockPanel Grid.Row="4" Margin="0,12,0,0" LastChildFill="False">
                     <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                        <Button Style="{StaticResource OutlineButton.Small}"
+                        <Button Style="{StaticResource OutlineButton.Small}" HorizontalAlignment="Center"
                                 Command="{Binding PagAnteriorCommand}"
                                 IsEnabled="{Binding HasPrev}">
                             <StackPanel Orientation="Horizontal">
@@ -224,7 +255,7 @@
                             <TextBlock Text="{Binding Page}" Foreground="{DynamicResource PrimaryBrush}" FontWeight="SemiBold"/>
                         </Border>
 
-                        <Button Style="{StaticResource OutlineButton.Small}"
+                        <Button Style="{StaticResource OutlineButton.Small}" HorizontalAlignment="Center"
                                 Command="{Binding PagSiguienteCommand}"
                                 IsEnabled="{Binding HasNext}">
                             <StackPanel Orientation="Horizontal">
@@ -238,7 +269,7 @@
         </Grid>
 
         <!-- ================= FORMULARIO ================= -->
-        <ContentControl Content="{Binding FormVm}">
+        <ContentControl Content="{Binding FormVm}" Panel.ZIndex="5">
             <ContentControl.Style>
                 <Style TargetType="ContentControl">
                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -250,5 +281,109 @@
                 </Style>
             </ContentControl.Style>
         </ContentControl>
+
+        <!-- Modal de acciones -->
+        <Grid Panel.ZIndex="10">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsActionDialogOpen}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <Rectangle Fill="#80000000"/>
+            <Border Width="360"
+                    Padding="24"
+                    Background="White"
+                    CornerRadius="12"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="Acciones del activo"
+                               Style="{StaticResource H2}"/>
+                    <TextBlock Text="{Binding AccionSeleccionada.Codigo}"
+                               Style="{StaticResource Caption}"
+                               Margin="0,8,0,0"/>
+                    <TextBlock Text="{Binding AccionSeleccionada.Nombre}"
+                               Style="{StaticResource Body}"/>
+
+                    <Separator Margin="0,16"/>
+
+                    <Button Style="{StaticResource PrimaryButton}"
+                            Command="{Binding EditarSeleccionadoCommand}"
+                            Content="Ver / Editar activo"
+                            Margin="0,0,0,8"/>
+                    <Button Command="{Binding AbrirTrasladoCommand}"
+                            Content="Traslado de un bien"
+                            Margin="0,0,0,8">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource OutlineButton}">
+                                <Setter Property="IsEnabled" Value="True"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding AccionSeleccionada.EnBaja}" Value="True">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Command="{Binding AbrirBajaCommand}"
+                            Content="Dar de baja al activo"
+                            Margin="0,0,0,24">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource OutlineButton}">
+                                <Setter Property="IsEnabled" Value="True"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding AccionSeleccionada.EnBaja}" Value="True">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Style="{StaticResource GhostButton.Small}"
+                            Command="{Binding CancelarAccionesCommand}"
+                            Content="Cancelar"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Notificacion de exito -->
+        <Grid Panel.ZIndex="20">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsNotifyOpen}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <Rectangle Fill="#80000000"/>
+            <Border Width="420"
+                    Padding="24"
+                    Background="White"
+                    CornerRadius="12"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <iconPacks:PackIconMaterial Kind="CheckCircleOutline" Width="28" Height="28"/>
+                        <TextBlock Text="{Binding NotifyTitle}" Style="{StaticResource H2}" Margin="8,0,0,0"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding NotifyMessage}" Style="{StaticResource Body}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                        <Button Style="{StaticResource PrimaryButton}"
+                                Command="{Binding CerrarNotificacionCommand}"
+                                Content="Aceptar"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
     </Grid>
 </UserControl>

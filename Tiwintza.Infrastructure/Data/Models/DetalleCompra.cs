@@ -1,13 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using Tiwintza.Infrastructure.Data;
 
 namespace Tiwintza.Infrastructure.Data.Models;
 
 [Table("detalle_compra")]
-public partial class DetalleCompra
+public partial class DetalleCompra : ISedeScoped
 {
     [Key]
     [Column("id")]
@@ -28,6 +29,9 @@ public partial class DetalleCompra
 
     [Column("creado_en")]
     public DateTime CreadoEn { get; set; }
+
+    [Column("sede_id")]
+    public Guid SedeId { get; set; }
 
     [ForeignKey("CompraId")]
     [InverseProperty("DetalleCompra")]

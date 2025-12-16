@@ -1,20 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Tiwintza.Infrastructure.Common;
 using Tiwintza.Infrastructure.Data.Models;
 
 namespace Tiwintza.Infrastructure.Data;
 
 public partial class AppDbContext : DbContext
 {
-    public AppDbContext()
-    {
-    }
+    private readonly ITenantAccessor _tenant;
 
-    public AppDbContext(DbContextOptions<AppDbContext> options)
+    public AppDbContext(DbContextOptions<AppDbContext> options, ITenantAccessor tenant)
         : base(options)
     {
+        _tenant = tenant ?? throw new ArgumentNullException(nameof(tenant));
     }
+
+    private Guid TenantId => _tenant.Current?.Id ?? Guid.Empty;
 
     public virtual DbSet<Activo> Activo { get; set; }
 
@@ -48,15 +52,57 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Usuario> Usuario { get; set; }
 
+    public virtual DbSet<Sede> Sede { get; set; }
+
+    public virtual DbSet<UsuarioSede> UsuarioSede { get; set; }
+
     public virtual DbSet<VExistenciasNiveles> VExistenciasNiveles { get; set; }
 
     public virtual DbSet<VExistenciasPorArea> VExistenciasPorArea { get; set; }
 
     public virtual DbSet<VMovimientosExistencia> VMovimientosExistencia { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=batallon_tiwintza;Username=appuser;Password=Usuario12345");
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        ApplyTenantScope();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override int SaveChanges()
+    {
+        ApplyTenantScope();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        ApplyTenantScope();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        ApplyTenantScope();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void ApplyTenantScope()
+    {
+        var tenantId = TenantId;
+        if (tenantId == Guid.Empty)
+        {
+            return;
+        }
+
+        foreach (var entry in ChangeTracker.Entries<ISedeScoped>())
+        {
+            if (entry.State == EntityState.Added && entry.Entity.SedeId == Guid.Empty)
+            {
+                entry.Entity.SedeId = tenantId;
+            }
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -67,6 +113,10 @@ public partial class AppDbContext : DbContext
             entity.HasKey(e => e.Id).HasName("activo_pkey");
 
             entity.Property(e => e.CreadoEn).HasDefaultValueSql("now()");
+
+            entity.Property(e => e.DocumentoAutorizacion)
+                .HasDefaultValue(false);
+
 
             entity.HasOne(d => d.Area).WithMany(p => p.Activo)
                 .OnDelete(DeleteBehavior.Restrict)

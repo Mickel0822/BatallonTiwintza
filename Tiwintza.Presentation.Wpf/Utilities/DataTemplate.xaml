@@ -1,21 +1,64 @@
-﻿<!-- Styles/ViewTemplates.xaml -->
+<!-- Styles/ViewTemplates.xaml -->
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:views="clr-namespace:Tiwintza.Presentation.Wpf.Views"
     xmlns:viewsAct="clr-namespace:Tiwintza.Presentation.Wpf.Views.Activos"
+    xmlns:viewsExist="clr-namespace:Tiwintza.Presentation.Wpf.Views.Existencias"
+    xmlns:viewsCat="clr-namespace:Tiwintza.Presentation.Wpf.Views.Catalogos"
+    xmlns:viewsAud="clr-namespace:Tiwintza.Presentation.Wpf.Views.Auditoria"
+    xmlns:viewsConfig="clr-namespace:Tiwintza.Presentation.Wpf.Views.Configuracion"
     xmlns:vmDash="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels"
-    xmlns:vmAct="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Activos">
+    xmlns:vmAct="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Activos"
+    xmlns:vmExist="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Existencias"
+    xmlns:vmCat="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Catalogos"
+    xmlns:vmAud="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Auditoria"
+    xmlns:vmConfig="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Configuracion">
 
     <!-- Dashboard -->
     <DataTemplate DataType="{x:Type vmDash:DashboardViewModel}">
         <views:DashboardView/>
     </DataTemplate>
 
-    <!-- Activos (nuevo) -->
+    <!-- Activos -->
     <DataTemplate DataType="{x:Type vmAct:ActivosListViewModel}">
         <viewsAct:ActivosView/>
     </DataTemplate>
 
-    <!-- ❌ quita cualquier DataTemplate que apunte a vm:ActivosViewModel antiguo -->
+    <DataTemplate DataType="{x:Type vmAct:ActivoFormViewModel}">
+        <viewsAct:ActivoFormView/>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmAct:ActivoTrasladoViewModel}">
+        <viewsAct:ActivoTrasladoView/>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmAct:ActivoBajaViewModel}">
+        <viewsAct:ActivoBajaView/>
+    </DataTemplate>
+
+    <!-- Existencias -->
+    <DataTemplate DataType="{x:Type vmExist:ExistenciasListViewModel}">
+        <viewsExist:ExistenciasView/>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmExist:ExistenciaIngresoViewModel}">
+        <viewsExist:ExistenciaIngresoView/>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmExist:ExistenciaSalidaViewModel}">
+        <viewsExist:ExistenciaSalidaView/>
+    </DataTemplate>
+
+    <!-- Catalogos -->
+    <DataTemplate DataType="{x:Type vmCat:CatalogosViewModel}">
+        <viewsCat:CatalogosView/>
+    </DataTemplate>
+
+    <!-- Auditoria -->
+    <DataTemplate DataType="{x:Type vmAud:AuditoriaViewModel}">
+        <viewsAud:AuditoriaView/>
+    </DataTemplate>
+
+    <!-- Configuraci?n -->
+    <DataTemplate DataType="{x:Type vmConfig:ConfiguracionViewModel}">
+        <viewsConfig:ConfiguracionView/>
+    </DataTemplate>
+
 </ResourceDictionary>

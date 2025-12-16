@@ -28,7 +28,7 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource GridBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="Padding" Value="10,6"/>
         <Setter Property="MinHeight" Value="36"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="Template">
@@ -40,12 +40,12 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="10"/>
-                        <ScrollViewer x:Name="PART_ContentHost" Margin="10,6,10,6"/>
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
                         <!-- placeholder con Tag -->
                         <TextBlock x:Name="Placeholder"
                                    Text="{TemplateBinding Tag}"
                                    Foreground="{DynamicResource MutedBrush}"
-                                   Margin="12,6,12,6"
+                                   Margin="{TemplateBinding Padding}"
                                    IsHitTestVisible="False"
                                    Visibility="Collapsed"/>
                     </Grid>
@@ -78,7 +78,7 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource GridBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="Padding" Value="10,6"/>
         <Setter Property="MinHeight" Value="36"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="Template">
@@ -89,7 +89,7 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="10">
-                        <ScrollViewer x:Name="PART_ContentHost" Margin="10,6,10,6"/>
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsKeyboardFocused" Value="True">
@@ -139,13 +139,14 @@
                                IsHitTestVisible="False"/>
 
                         <!-- Texto seleccionado (SelectedItem.Nombre) -->
-                        <TextBlock x:Name="SelectedText"
-                               Margin="{TemplateBinding Padding}"
-                               VerticalAlignment="Center"
-                               TextTrimming="CharacterEllipsis"
-                               Text="{Binding SelectedItem.Nombre,
-                                              RelativeSource={RelativeSource TemplatedParent}}"
-                               IsHitTestVisible="False"/>
+                         <ContentPresenter x:Name="SelectedContent"
+                                           Margin="{TemplateBinding Padding}"
+                                           VerticalAlignment="Center"
+                                           Content="{TemplateBinding SelectionBoxItem}"
+                                           ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                           ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                           TextElement.Foreground="{DynamicResource OnSurfaceBrush}"
+                                           IsHitTestVisible="False"/>
 
                         <!-- Flecha -->
                         <Path x:Name="Arrow"
@@ -203,19 +204,19 @@
                         <!-- Mostrar placeholder cuando NO hay selección -->
                         <Trigger Property="SelectedIndex" Value="-1">
                             <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
-                            <Setter TargetName="SelectedText" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="SelectedContent" Property="Visibility" Value="Collapsed"/>
                         </Trigger>
 
                         <!-- Mostrar placeholder cuando SelectedValue es null (ej. converter 0->null) -->
                         <Trigger Property="SelectedValue" Value="{x:Null}">
                             <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
-                            <Setter TargetName="SelectedText" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="SelectedContent" Property="Visibility" Value="Collapsed"/>
                         </Trigger>
 
                         <!-- Mostrar placeholder cuando SelectedItem es null -->
                         <Trigger Property="SelectedItem" Value="{x:Null}">
                             <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
-                            <Setter TargetName="SelectedText" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="SelectedContent" Property="Visibility" Value="Collapsed"/>
                         </Trigger>
 
                         <!-- Mostrar placeholder cuando el sentinela (Id = 0) está seleccionado -->
@@ -224,7 +225,7 @@
                                 <sys:Int64>0</sys:Int64>
                             </DataTrigger.Value>
                             <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
-                            <Setter TargetName="SelectedText" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="SelectedContent" Property="Visibility" Value="Collapsed"/>
                         </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -257,6 +258,114 @@
 
 
 
+
+    <Style x:Key="PasswordToggleButton" TargetType="ToggleButton">
+        <Setter Property="Width" Value="36"/>
+        <Setter Property="Height" Value="36"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="Chrome"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="8">
+                        <Grid Width="24"
+                              Height="24"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center">
+                            <Viewbox Width="20" Height="20">
+                                <Grid x:Name="EyeIcon"
+                                      RenderTransformOrigin="0.5,0.5">
+                                    <Grid.RenderTransform>
+                                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                    </Grid.RenderTransform>
+                                    <Path Data="M2,10 C5,3 11,0 16,0 C21,0 27,3 30,10 C27,17 21,20 16,20 C11,20 5,17 2,10 Z"
+                                          Stroke="{DynamicResource OnSurfaceBrush}"
+                                          StrokeThickness="1.6"
+                                          Fill="Transparent"
+                                          StrokeLineJoin="Round"
+                                          Stretch="Uniform"/>
+                                    <Ellipse x:Name="Pupil"
+                                             Width="6"
+                                             Height="6"
+                                             Fill="{DynamicResource OnSurfaceBrush}"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"/>
+                                    <Path x:Name="ClosedSlash"
+                                          Data="M4,16 L28,4"
+                                          Stroke="{DynamicResource OnSurfaceBrush}"
+                                          StrokeThickness="2"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          Opacity="0"/>
+                                </Grid>
+                            </Viewbox>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#11000000"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#1F000000"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="EyeIcon"
+                                                         Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                         To="0.15"
+                                                         Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction>
+                                                <SineEase EasingMode="EaseIn"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="Pupil"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0"
+                                                         Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="ClosedSlash"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1"
+                                                         Duration="0:0:0.18"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="EyeIcon"
+                                                         Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                         To="1"
+                                                         Duration="0:0:0.2">
+                                            <DoubleAnimation.EasingFunction>
+                                                <SineEase EasingMode="EaseOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="Pupil"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1"
+                                                         Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="ClosedSlash"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0"
+                                                         Duration="0:0:0.18"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
     <!-- ========= Toggle pill (CheckBox) ========= -->
     <Style x:Key="SwitchToggle" TargetType="CheckBox">
