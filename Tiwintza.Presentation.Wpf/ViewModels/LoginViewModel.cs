@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Tiwintza.Infrastructure.Common;
 using Tiwintza.Infrastructure.Services.Auth;
+using Tiwintza.Infrastructure.Dtos.Auth;
 using Tiwintza.Presentation.Wpf.Services;
 
 namespace Tiwintza.Presentation.Wpf.ViewModels;
@@ -34,6 +35,7 @@ public partial class LoginViewModel : ObservableObject
         _creds = creds;
         _tenantAccessor = tenantAccessor;
     }
+
 
     public async Task InitAsync()
     {
@@ -63,10 +65,10 @@ public partial class LoginViewModel : ObservableObject
         try
         {
             if (string.IsNullOrWhiteSpace(Usuario)) { Mensaje = "Ingrese el usuario."; return; }
-            if (string.IsNullOrWhiteSpace(Clave)) { Mensaje = "Ingrese la contraseña."; return; }
+            if (string.IsNullOrWhiteSpace(Clave)) { Mensaje = "Ingrese la contraseÃ±a."; return; }
 
             var ok = await _auth.LoginAsync(Usuario.Trim(), Clave, Recordarme);
-            if (!ok) { Mensaje = "Usuario o contraseña incorrectos."; return; }
+            if (!ok) { Mensaje = "Usuario o contraseÃ±a incorrectos."; return; }
 
             try
             {
@@ -79,7 +81,7 @@ public partial class LoginViewModel : ObservableObject
             {
             }
 
-            var session = _auth.Current ?? throw new InvalidOperationException("No se pudo obtener la sesión actual.");
+            var session = _auth.Current ?? throw new InvalidOperationException("No se pudo obtener la sesiÃ³n actual.");
             var sedes = session.Sedes ?? Array.Empty<SedeTenant>();
             if (sedes.Count == 0)
                 throw new InvalidOperationException("El usuario no tiene una sede asignada.");
@@ -99,7 +101,7 @@ public partial class LoginViewModel : ObservableObject
 #if DEBUG
             Mensaje = ex.GetBaseException().Message;
 #else
-            Mensaje = "Ocurrió un error al iniciar sesión.";
+            Mensaje = "OcurriÃ³ un error al iniciar sesiÃ³n.";
 #endif
         }
         finally
@@ -131,7 +133,7 @@ public partial class LoginViewModel : ObservableObject
         await _auth.LogoutAsync();
         _tenantAccessor.Clear();
         LimpiarSeleccionSede();
-        Mensaje = "Selección de sede cancelada. Ingrese nuevamente.";
+        Mensaje = "SelecciÃ³n de sede cancelada. Ingrese nuevamente.";
     }
 
     private bool PuedeConfirmarSede() => RequiereSeleccionSede && !IsBusy && SedeSeleccionada is not null;

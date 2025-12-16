@@ -7,17 +7,20 @@ using System.Threading.Tasks;
 using System.Windows;
 using Tiwintza.Infrastructure.Dtos.Catalogos;
 using Tiwintza.Infrastructure.Services;
+using Tiwintza.Infrastructure.Services.Auth;
 
 namespace Tiwintza.Presentation.Wpf.ViewModels.Catalogos;
 
 public sealed partial class CatalogosViewModel : ObservableObject
 {
     private readonly ICatalogosService _service;
+    private readonly IAuthService _auth;
     private bool _initialized;
 
-    public CatalogosViewModel(ICatalogosService service)
+    public CatalogosViewModel(ICatalogosService service, IAuthService auth)
     {
         _service = service;
+        _auth = auth;
         Areas = new ObservableCollection<CatalogItemModel>();
         Tipos = new ObservableCollection<CatalogItemModel>();
         Proveedores = new ObservableCollection<ProveedorModel>();
@@ -27,6 +30,7 @@ public sealed partial class CatalogosViewModel : ObservableObject
     public ObservableCollection<CatalogItemModel> Areas { get; }
     public ObservableCollection<CatalogItemModel> Tipos { get; }
     public ObservableCollection<ProveedorModel> Proveedores { get; }
+    public bool IsAdmin => _auth.Current?.Roles.Any(r => r.Equals("admin", StringComparison.OrdinalIgnoreCase) || r.Equals("administrador", StringComparison.OrdinalIgnoreCase)) ?? false;
 
     [ObservableProperty] private bool isBusy;
     [ObservableProperty] private string? errorMessage;
@@ -51,6 +55,7 @@ public sealed partial class CatalogosViewModel : ObservableObject
     public async Task InitializeAsync()
     {
         if (_initialized) return;
+        OnPropertyChanged(nameof(IsAdmin));
         await CargarAsync();
         _initialized = true;
     }
@@ -64,7 +69,7 @@ public sealed partial class CatalogosViewModel : ObservableObject
         await CargarAsync();
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(IsAdmin))]
     private async Task AgregarAreaAsync()
     {
         if (string.IsNullOrWhiteSpace(NuevoAreaNombre))
@@ -86,7 +91,7 @@ public sealed partial class CatalogosViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(IsAdmin))]
     private void AbrirEditarArea(CatalogItemModel? item)
     {
         if (item is null) return;
@@ -120,7 +125,7 @@ public sealed partial class CatalogosViewModel : ObservableObject
         IsAreaDialogOpen = false;
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(IsAdmin))]
     private async Task EliminarAreaAsync(CatalogItemModel? item)
     {
         if (item is null) return;
@@ -138,7 +143,7 @@ public sealed partial class CatalogosViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(IsAdmin))]
     private async Task AgregarTipoAsync()
     {
         if (string.IsNullOrWhiteSpace(NuevoTipoNombre))
@@ -160,7 +165,7 @@ public sealed partial class CatalogosViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(IsAdmin))]
     private void AbrirEditarTipo(CatalogItemModel? item)
     {
         if (item is null) return;
@@ -194,7 +199,7 @@ public sealed partial class CatalogosViewModel : ObservableObject
         IsTipoDialogOpen = false;
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(IsAdmin))]
     private async Task EliminarTipoAsync(CatalogItemModel? item)
     {
         if (item is null) return;
@@ -212,7 +217,7 @@ public sealed partial class CatalogosViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(IsAdmin))]
     private async Task AgregarProveedorAsync()
     {
         if (!NuevoProveedor.EsValido(out var mensaje))
@@ -234,7 +239,7 @@ public sealed partial class CatalogosViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(IsAdmin))]
     private void AbrirEditarProveedor(ProveedorModel? proveedor)
     {
         if (proveedor is null) return;
@@ -274,7 +279,7 @@ public sealed partial class CatalogosViewModel : ObservableObject
         IsProveedorDialogOpen = false;
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(IsAdmin))]
     private async Task EliminarProveedorAsync(ProveedorModel? proveedor)
     {
         if (proveedor is null) return;

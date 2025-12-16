@@ -59,63 +59,55 @@
         </StackPanel>
 
         <Border Grid.Row="1" Margin="24,0,24,24" Style="{StaticResource Card}" Padding="24">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+            <StackPanel>
+                <!-- Filtros Wrap -->
+                <WrapPanel Margin="0,0,0,12">
+                     <StackPanel Margin="0,0,16,12">
+                        <TextBlock Text="Desde" Style="{StaticResource FilterLabel}"/>
+                        <DatePicker SelectedDate="{Binding FechaInicio}" Width="140"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,16,12">
+                        <TextBlock Text="Hasta" Style="{StaticResource FilterLabel}"/>
+                        <DatePicker SelectedDate="{Binding FechaFin}" Width="140"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,16,12">
+                        <TextBlock Text="Usuario" Style="{StaticResource FilterLabel}"/>
+                        <ComboBox ItemsSource="{Binding Usuarios}" SelectedItem="{Binding UsuarioSeleccionado}" DisplayMemberPath="Display" Width="160"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,16,12">
+                        <TextBlock Text="Entidad" Style="{StaticResource FilterLabel}"/>
+                        <ComboBox ItemsSource="{Binding Entidades}" SelectedItem="{Binding EntidadSeleccionada}" DisplayMemberPath="Display" Width="160"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Acción" Style="{StaticResource FilterLabel}"/>
+                        <ComboBox ItemsSource="{Binding Acciones}" SelectedItem="{Binding AccionSeleccionada}" DisplayMemberPath="Display" Width="140"/>
+                    </StackPanel>
+                </WrapPanel>
 
-                <!-- Rango de fechas -->
-                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,12">
-                    <TextBlock Text="Desde" Style="{StaticResource FilterLabel}"/>
-                    <DatePicker SelectedDate="{Binding FechaInicio}" Width="140"/>
-                </StackPanel>
-                <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,12,12">
-                    <TextBlock Text="Hasta" Style="{StaticResource FilterLabel}"/>
-                    <DatePicker SelectedDate="{Binding FechaFin}" Width="140"/>
-                </StackPanel>
+                <!-- Busqueda -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                         <TextBlock Text="Buscar por ID o resumen" Style="{StaticResource FilterLabel}"/>
+                         <TextBox Text="{Binding Texto, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBox}">
+                             <TextBox.InputBindings>
+                                 <KeyBinding Key="Enter" Command="{Binding BuscarCommand}"/>
+                             </TextBox.InputBindings>
+                         </TextBox>
+                    </StackPanel>
 
-                <!-- Filtros de selección -->
-                <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,12,12">
-                    <TextBlock Text="Usuario" Style="{StaticResource FilterLabel}"/>
-                    <ComboBox ItemsSource="{Binding Usuarios}" SelectedItem="{Binding UsuarioSeleccionado}" DisplayMemberPath="Display"/>
-                </StackPanel>
-                <StackPanel Grid.Row="0" Grid.Column="3" Margin="0,0,12,12">
-                    <TextBlock Text="Entidad" Style="{StaticResource FilterLabel}"/>
-                    <ComboBox ItemsSource="{Binding Entidades}" SelectedItem="{Binding EntidadSeleccionada}" DisplayMemberPath="Display"/>
-                </StackPanel>
-                <StackPanel Grid.Row="0" Grid.Column="4" Margin="0,0,12,12">
-                    <TextBlock Text="Acción" Style="{StaticResource FilterLabel}"/>
-                    <ComboBox ItemsSource="{Binding Acciones}" SelectedItem="{Binding AccionSeleccionada}" DisplayMemberPath="Display"/>
-                </StackPanel>
-
-                <!-- Búsqueda y Botón -->
-                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5" Margin="0,0,12,0">
-                    <TextBlock Text="Buscar por ID o resumen" Style="{StaticResource FilterLabel}"/>
-                    <TextBox Text="{Binding Texto, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBox}">
-                        <TextBox.InputBindings>
-                            <KeyBinding Key="Enter" Command="{Binding BuscarCommand}"/>
-                        </TextBox.InputBindings>
-                    </TextBox>
-                </StackPanel>
-
-                <StackPanel Grid.Row="1" Grid.Column="5" VerticalAlignment="Bottom">
-                    <Button Style="{StaticResource PrimaryButton}" Command="{Binding BuscarCommand}">
+                    <Button Grid.Column="1" Style="{StaticResource PrimaryButton}" Command="{Binding BuscarCommand}" VerticalAlignment="Bottom">
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconMaterial Kind="Magnify" Width="16" Height="16" Margin="0,0,8,0"/>
                             <TextBlock Text="Buscar"/>
                         </StackPanel>
                     </Button>
-                </StackPanel>
-            </Grid>
+                </Grid>
+            </StackPanel>
         </Border>
 
         <Grid Grid.Row="2" Margin="24,0,24,24">

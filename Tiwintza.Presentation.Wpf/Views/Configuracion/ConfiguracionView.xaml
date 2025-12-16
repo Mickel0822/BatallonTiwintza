@@ -78,12 +78,12 @@
                               IsReadOnly="True"
                               Style="{StaticResource GridTable2025}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Nombre completo" Binding="{Binding NombreCompleto}" Width="*" MinWidth="200"/>
-                            <DataGridTextColumn Header="Usuario" Binding="{Binding Username}" Width="160"/>
-                            <DataGridTextColumn Header="Correo" Binding="{Binding Email}" Width="200"/>
-                            <DataGridTextColumn Header="Roles" Binding="{Binding Roles}" Width="200"/>
-                            <DataGridTextColumn Header="Activo" Binding="{Binding IsActive}" Width="80"/>
-                            <DataGridTextColumn Header="Creado" Binding="{Binding CreadoEn}" Width="160"/>
+                            <DataGridTextColumn Header="Nombre completo" Binding="{Binding NombreCompleto}" Width="2*"/>
+                            <DataGridTextColumn Header="Usuario" Binding="{Binding Username}" Width="*"/>
+                            <DataGridTextColumn Header="Correo" Binding="{Binding Email}" Width="1.5*"/>
+                            <DataGridTextColumn Header="Roles" Binding="{Binding Roles}" Width="1.5*"/>
+                            <DataGridTextColumn Header="Activo" Binding="{Binding IsActive}" Width="Auto"/>
+                            <DataGridTextColumn Header="Creado" Binding="{Binding CreadoEn}" Width="*"/>
                             <DataGridTemplateColumn Width="Auto">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -91,7 +91,10 @@
                                                 Command="{Binding DataContext.EditarUsuarioCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                 CommandParameter="{Binding}"
                                                 ToolTip="Editar usuario">
-                                            <iconPacks:PackIconMaterial Kind="Pencil" Width="16" Height="16"/>
+                                            <StackPanel Orientation="Horizontal">
+                                                <iconPacks:PackIconMaterial Kind="Pencil" Width="14" Height="14" Margin="0,0,6,0"/>
+                                                <TextBlock Text="Editar"/>
+                                            </StackPanel>
                                         </Button>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>

@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Collections.ObjectModel;
 using Tiwintza.Infrastructure.Common;
 using Tiwintza.Infrastructure.Services.Auth;
 using Tiwintza.Presentation.Wpf.Models;
@@ -30,7 +32,7 @@ public partial class MainViewModel : ObservableObject
 
     private readonly Dictionary<string, Func<object>> _factoryMap;
     private readonly Dictionary<string, object> _cache = new();
-    private readonly List<NavigationItem> _menuItems = new();
+    private readonly ObservableCollection<NavigationItem> _menuItems = new();
 
     [ObservableProperty] private object? current;
     [ObservableProperty] private NavigationItem? selectedMenu;
@@ -47,7 +49,7 @@ public partial class MainViewModel : ObservableObject
 
     public bool IsAdmin { get; private set; }
 
-    public IReadOnlyList<NavigationItem> Menu => _menuItems;
+    public ObservableCollection<NavigationItem> Menu => _menuItems;
 
     public event Action? LogoutRequested;
 
@@ -83,7 +85,7 @@ public partial class MainViewModel : ObservableObject
             ["config"] = () => _configFactory()
         };
 
-        InitializeSessionState(_auth.Current);
+        Application.Current.Dispatcher.Invoke(() => InitializeSessionState(_auth.Current));
 
         if (Menu.Count > 0)
         {
@@ -112,7 +114,7 @@ public partial class MainViewModel : ObservableObject
     {
         if (!IsAdmin)
         {
-            CambioSedeMensaje = "Solo los administradores pueden cambiar de sede.";
+            CambioSedeMensaje = "El cambio de sede es una operación restringida exclusivamente para Administradores.\nSi requiere realizar esta acción, por favor contacte al personal autorizado.";
             IsSedeSelectorOpen = true;
             return;
         }

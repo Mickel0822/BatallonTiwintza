@@ -6,7 +6,6 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <UserSecretsId>78842df6-a31b-4f13-a488-610c36bd826c</UserSecretsId>
     <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
@@ -17,7 +16,7 @@
 
   <ItemGroup>
     <Content Include="appsettings.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 

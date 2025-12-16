@@ -1,14 +1,15 @@
-using BCrypt.Net;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows; // [DEBUG]
 using Tiwintza.Infrastructure.Common;
 using Tiwintza.Infrastructure.Data;
 using Tiwintza.Infrastructure.Data.Models;
+using BCrypt.Net;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Tiwintza.Infrastructure.Services.Auth;
 
@@ -61,11 +62,14 @@ public sealed class AuthService : IAuthService
                  return false;
             }
 
+            // [DEBUG] Diagnóstico de contraseñas
+            var debugHash = BCrypt.Net.BCrypt.HashPassword(password);
+            
             if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             {
-                // Handle failed attempts logic if needed
-                _logger.LogWarning("Login fallido: password incorrecto {Username}", username);
-                return false;
+                // [DEBUG] Mostrar ventana emergente directa
+                MessageBox.Show($"[DEBUG: ALGORITMO BCRYPT]\n\nHash Generado (input): {debugHash}\n\nHash DB (guardado): {user.PasswordHash}", "DEBUG HASH", MessageBoxButton.OK, MessageBoxImage.Information);
+                throw new Exception("Login debug - check popup");
             }
 
             // Login success

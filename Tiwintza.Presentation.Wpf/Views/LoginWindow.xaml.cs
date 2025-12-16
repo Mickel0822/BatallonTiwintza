@@ -33,7 +33,9 @@ namespace Tiwintza.Presentation.Wpf.Views
 
                 Close();
             };
+
         }
+
 
         private void PasswordBox_OnPasswordChanged(object sender, RoutedEventArgs e)
         {

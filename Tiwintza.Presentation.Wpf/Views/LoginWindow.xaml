@@ -8,10 +8,12 @@
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
         Background="{DynamicResource AppGradient}"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         diag:PresentationTraceSources.TraceLevel="High">
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+        <conv:StringNullToVisibilityConverter x:Key="StringNullToVisibility"/>
     </Window.Resources>
 
     <Grid Margin="36" diag:PresentationTraceSources.TraceLevel="High">
@@ -118,6 +120,7 @@
                                 diag:PresentationTraceSources.TraceLevel="High"/>
                     </StackPanel>
 
+
                     <TextBlock Text="{Binding Mensaje}" FontSize="12" TextWrapping="Wrap"
                                Foreground="{DynamicResource ErrorBrush}" Margin="2,10,0,0"
                                diag:PresentationTraceSources.TraceLevel="High"/>
@@ -164,5 +167,7 @@
                 </Border>
             </Grid>
         </Border>
+
+
     </Grid>
 </Window>

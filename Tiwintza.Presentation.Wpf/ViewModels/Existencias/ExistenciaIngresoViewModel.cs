@@ -64,7 +64,34 @@ public sealed partial class ExistenciaIngresoViewModel : ObservableValidator
 
     [ObservableProperty] private ExistenciaComboItemDto? productoSeleccionado;
     [ObservableProperty] private int? productoCantidad = 1;
-    [ObservableProperty] private decimal? productoCostoUnitario;
+    
+    // Backing field handling for decimal input to allow partial typing (e.g. "2.")
+    private decimal? productoCostoUnitario;
+    public decimal? ProductoCostoUnitario
+    {
+        get => productoCostoUnitario;
+        private set
+        {
+            if (SetProperty(ref productoCostoUnitario, value))
+            {
+               // Sync? No need, logic uses this property.
+            }
+        }
+    }
+
+    [ObservableProperty] private string productoCostoUnitarioInput = "0";
+
+    partial void OnProductoCostoUnitarioInputChanged(string value)
+    {
+        if (decimal.TryParse(value, out var result))
+        {
+            ProductoCostoUnitario = result;
+        }
+        else if (string.IsNullOrWhiteSpace(value))
+        {
+            ProductoCostoUnitario = 0;
+        }
+    }
 
     [ObservableProperty] private bool isProveedorQuickAddVisible;
     [ObservableProperty] private bool isProveedorQuickAddBusy;
@@ -189,7 +216,7 @@ public sealed partial class ExistenciaIngresoViewModel : ObservableValidator
 
         ProductoSeleccionado = null;
         ProductoCantidad = 1;
-        ProductoCostoUnitario = 0;
+        ProductoCostoUnitarioInput = "0";
         OnPropertyChanged(nameof(PuedeGuardar));
     }
 
@@ -449,7 +476,7 @@ public sealed partial class ExistenciaIngresoViewModel : ObservableValidator
 
         ErrorMessage = null;
         ProductoCantidad = 1;
-        ProductoCostoUnitario = 0;
+        ProductoCostoUnitarioInput = "0";
     }
 
     partial void OnIsProveedorQuickAddBusyChanged(bool value) => OnPropertyChanged(nameof(PuedeGuardarProveedor));
