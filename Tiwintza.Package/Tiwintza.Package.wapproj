@@ -65,8 +65,9 @@
     <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
     <GenerateTestArtifacts>True</GenerateTestArtifacts>
     <AppxBundlePlatforms>x64</AppxBundlePlatforms>
-    <AppInstallerUri>https://gamerfest2025.com/releases/</AppInstallerUri>
+    <AppInstallerUri>https://mickel0822.github.io/instalador-tiwintza/</AppInstallerUri>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
+    <ProjectPriIndexName>Tiwintza.Package</ProjectPriIndexName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <AppxBundle>Always</AppxBundle>
@@ -157,13 +158,6 @@
     <None Include="Tiwintza_CodeSigning.pfx" />
   </ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" Condition="Exists('$(WapProjPath)\Microsoft.DesktopBridge.targets')" />
-  <Target Name="Build">
-    <Message Text="Skipped Desktop Bridge packaging in CLI build" Importance="low" />
-  </Target>
-
-  <Target Name="Clean">
-    <Message Text="Skipped Desktop Bridge clean" Importance="low" />
-  </Target>
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" PrivateAssets="all" />
   </ItemGroup>
@@ -171,4 +165,3 @@
     <ProjectReference Include="..\Tiwintza.Presentation.Wpf\Tiwintza.Presentation.Wpf.csproj" />
   </ItemGroup>
 </Project>
-

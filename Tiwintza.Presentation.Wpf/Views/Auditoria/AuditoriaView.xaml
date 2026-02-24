@@ -5,11 +5,13 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Auditoria"
+             xmlns:conv="clr-namespace:Tiwintza.Presentation.Wpf.Converters"
              mc:Ignorable="d"
              d:DesignHeight="720"
              d:DesignWidth="1200">
 
     <UserControl.Resources>
+        <conv:NullToVisibilityConverter x:Key="NullToVisibility"/>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
 
         <Style x:Key="FilterLabel" TargetType="TextBlock" BasedOn="{StaticResource Caption}">
@@ -54,7 +56,11 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="24,16,24,24">
-            <TextBlock Text="Auditoria" Style="{StaticResource H1}"/>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Auditoria" Style="{StaticResource H1}"/>
+                <iconPacks:PackIconMaterial Kind="HelpCircle" Width="20" Height="20" Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}"
+                                            ToolTip="Este módulo registra automáticamente todas las acciones críticas del sistema (Ingresos, Salidas, Cambios). Utilice los filtros de Fecha y Usuario para rastrear movimientos históricos. Exporte a Excel para análisis detallado."/>
+            </StackPanel>
             <TextBlock Text="Consulte el historial de acciones realizadas en el sistema" Style="{StaticResource Caption}"/>
         </StackPanel>
 
@@ -124,6 +130,7 @@
                 <ColumnDefinition Width="2*"/>
             </Grid.ColumnDefinitions>
 
+            <!-- Lista de Eventos (Event Centric) -->
             <Border Grid.Column="0" Style="{StaticResource Card}" Padding="0">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -133,88 +140,137 @@
 
                     <DockPanel Grid.Row="0" Margin="24,24,24,12">
                         <StackPanel Orientation="Vertical" DockPanel.Dock="Left">
-                            <TextBlock Text="Registros" Style="{StaticResource H3}"/>
-                            <TextBlock Text="Auditoria de eventos recientes" Style="{StaticResource Caption}"/>
+                            <TextBlock Text="Cronología de Eventos" Style="{StaticResource H3}"/>
+                            <TextBlock Text="Actividad agrupada por evento de negocio" Style="{StaticResource Caption}"/>
                         </StackPanel>
                         <Button Content="Exportar" Style="{StaticResource OutlineButton}" Command="{Binding ExportarCommand}" HorizontalAlignment="Right"/>
                     </DockPanel>
 
-                    <TreeView Grid.Row="1" 
-                              ItemsSource="{Binding Items}" 
-                              BorderThickness="0" 
-                              Background="Transparent">
-                        <TreeView.Resources>
-                            <HierarchicalDataTemplate DataType="{x:Type vm:AuditGroupItemViewModel}" ItemsSource="{Binding Detalles}">
-                                <Border Padding="8,6" Background="Transparent" CornerRadius="4" Margin="0,2">
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Border Background="{StaticResource PrimaryBrush}" CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding AccionUsuario}" Value="">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding AccionUsuario}" Value="{x:Null}">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <TextBlock Text="{Binding AccionUsuario}" Foreground="White" FontWeight="SemiBold" FontSize="12"/>
-                                        </Border>
-                                        <TextBlock Text="{Binding FechaHora, StringFormat='dd/MM/yyyy HH:mm'}" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                        <TextBlock Text="•" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                        <TextBlock Text="{Binding Usuario}" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding TotalOperaciones, StringFormat='({0} operaciones)'}" Margin="8,0,0,0" Foreground="{StaticResource MutedBrush}" FontStyle="Italic" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-                            </HierarchicalDataTemplate>
-
-                            <DataTemplate DataType="{x:Type vm:AuditoriaItemModel}">
-                                <Button Command="{Binding DataContext.SeleccionarCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                        CommandParameter="{Binding}"
-                                        Style="{StaticResource GhostButton}" 
-                                        HorizontalContentAlignment="Stretch"
-                                        Padding="4,4" Margin="0,1">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="110"/>
-                                            <ColumnDefinition Width="150"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        
-                                        <Border Grid.Column="0" Style="{StaticResource AccionChip}" HorizontalAlignment="Left" Margin="0,0,8,0">
-                                             <TextBlock Text="{Binding Accion}" Style="{StaticResource Caption}" Foreground="White" FontSize="11"/>
-                                        </Border>
-                                        
-                                        <TextBlock Grid.Column="1" Text="{Binding Entidad}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="Medium"/>
-                                        <TextBlock Grid.Column="2" Text="{Binding Resumen}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Foreground="{StaticResource MutedBrush}"/>
-                                    </Grid>
-                                </Button>
-                            </DataTemplate>
-                        </TreeView.Resources>
-                        
-                        <TreeView.ItemContainerStyle>
-                            <Style TargetType="TreeViewItem">
-                                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
-                                <Setter Property="Padding" Value="2"/>
-                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                            </Style>
-                        </TreeView.ItemContainerStyle>
-                    </TreeView>
+                    <ListBox Grid.Row="1" 
+                             ItemsSource="{Binding Eventos}" 
+                             SelectedItem="{Binding EventoSeleccionado}"
+                             BorderThickness="0" 
+                             Background="Transparent"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                         <ListBox.ItemContainerStyle>
+                             <Style TargetType="ListBoxItem">
+                                 <Setter Property="Padding" Value="0"/>
+                                 <Setter Property="Margin" Value="0,0,0,8"/>
+                                 <Setter Property="Background" Value="Transparent"/>
+                                 <Setter Property="Cursor" Value="Hand"/>
+                                 <Setter Property="Template">
+                                     <Setter.Value>
+                                         <ControlTemplate TargetType="ListBoxItem">
+                                             <Border Background="{TemplateBinding Background}" 
+                                                     BorderBrush="{StaticResource GridBorderBrush}" 
+                                                     BorderThickness="1" 
+                                                     CornerRadius="8" 
+                                                     Padding="16,12">
+                                                 <ContentPresenter/>
+                                             </Border>
+                                             <ControlTemplate.Triggers>
+                                                 <Trigger Property="IsSelected" Value="True">
+                                                     <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+                                                     <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                                                 </Trigger>
+                                                 <Trigger Property="IsMouseOver" Value="True">
+                                                     <Setter Property="Background" Value="#F8FAFC"/>
+                                                 </Trigger>
+                                             </ControlTemplate.Triggers>
+                                         </ControlTemplate>
+                                     </Setter.Value>
+                                 </Setter>
+                             </Style>
+                         </ListBox.ItemContainerStyle>
+                         <ListBox.ItemTemplate>
+                             <DataTemplate>
+                                 <Grid>
+                                     <Grid.ColumnDefinitions>
+                                         <ColumnDefinition Width="Auto"/>
+                                         <ColumnDefinition Width="*"/>
+                                     </Grid.ColumnDefinitions>
+                                     
+                                     <!-- Icono Evento -->
+                                     <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20" Background="#EEF2FF" Margin="0,0,16,0">
+                                         <iconPacks:PackIconMaterial Kind="{Binding IconKind}" Foreground="{StaticResource PrimaryBrush}" Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                     </Border>
+                                     
+                                     <!-- Contenido -->
+                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                         <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource OnSurfaceBrush}"/>
+                                         <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Caption}" Foreground="{StaticResource MutedBrush}"/>
+                                     </StackPanel>
+                                 </Grid>
+                             </DataTemplate>
+                         </ListBox.ItemTemplate>
+                    </ListBox>
                 </Grid>
             </Border>
 
-            <Border Grid.Column="1" Style="{StaticResource Card}" Padding="24" Margin="16,0,0,0">
-                <StackPanel>
-                    <TextBlock Text="Detalle" Style="{StaticResource H3}"/>
-                    <TextBlock Text="{Binding Seleccionado.Resumen}" Style="{StaticResource Body}" Margin="0,8,0,12"/>
-                    <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource GridBorderBrush}" BorderThickness="1" CornerRadius="12">
-                        <ScrollViewer Height="260">
-                            <TextBox Text="{Binding DetalleFormateado}" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap" Background="Transparent" BorderThickness="0" IsReadOnly="True" AcceptsReturn="True"/>
-                        </ScrollViewer>
+            <!-- Panel Detalle Narrativo -->
+            <Border Grid.Column="1" Style="{StaticResource Card}" Padding="0" Margin="16,0,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header Narrativo -->
+                    <Border Grid.Row="0" Background="{StaticResource SurfaceBrush}" Padding="24" CornerRadius="8,8,0,0"
+                            BorderBrush="{StaticResource GridBorderBrush}" BorderThickness="0,0,0,1">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <iconPacks:PackIconMaterial Kind="{Binding EventoSeleccionado.IconKind}" Foreground="{StaticResource PrimaryBrush}" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                <TextBlock Text="{Binding EventoSeleccionado.Title}" Style="{StaticResource H2}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            
+                            <TextBlock Text="{Binding EventoSeleccionado.Description}" Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,0,0,16" FontSize="15" LineHeight="22"/>
+                            
+                            <!-- Nota Post-it Observacion -->
+                            <Border Background="#FFFBEEB0" CornerRadius="4" Padding="12" Margin="0,0,0,0" 
+                                    Visibility="{Binding EventoSeleccionado.Observacion, Converter={StaticResource NullToVisibility}}">
+                                <DockPanel>
+                                    <iconPacks:PackIconMaterial Kind="FormatQuoteOpen" Foreground="#B7950B" Width="16" Height="16" DockPanel.Dock="Left" Margin="0,0,8,0" VerticalAlignment="Top"/>
+                                    <TextBlock Text="{Binding EventoSeleccionado.Observacion}" FontStyle="Italic" Foreground="#7D6608" TextWrapping="Wrap"/>
+                                </DockPanel>
+                            </Border>
+                        </StackPanel>
                     </Border>
-                </StackPanel>
+
+                    <!-- Lista de Propiedades Consolidada (Humanizada) -->
+                    <ScrollViewer Grid.Row="1" Padding="24">
+                        <StackPanel>
+                            <TextBlock Text="Datos del Evento" Style="{StaticResource H3}" Margin="0,0,0,16" Foreground="{StaticResource MutedBrush}" FontSize="13"/>
+                            
+                            <ItemsControl ItemsSource="{Binding EventoSeleccionado.DetallePropiedades}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,16,16" MinWidth="180" MaxWidth="400">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Label}" Style="{StaticResource Caption}" Foreground="{StaticResource MutedBrush}" Margin="0,0,0,2"/>
+                                                <TextBlock Text="{Binding Value}" Style="{StaticResource Body}" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            
+                        </StackPanel>
+                    </ScrollViewer>
+                    
+                    <!-- Mensaje Vacío -->
+                    <Grid Grid.RowSpan="2" Background="White" Visibility="{Binding EventoSeleccionado, Converter={StaticResource NullToVisibility}, ConverterParameter=Inverse}">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                             <iconPacks:PackIconMaterial Kind="History" Width="48" Height="48" Foreground="{StaticResource MutedBrush}" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                             <TextBlock Text="Seleccione un evento para ver la historia completa" Style="{StaticResource Body}" Foreground="{StaticResource MutedBrush}" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
             </Border>
         </Grid>
 
@@ -325,8 +381,17 @@
 
         </Grid>
 
-
-
+        <!-- Loading Overlay -->
+        <Border Grid.RowSpan="99" Background="#80FFFFFF" 
+                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" 
+                Panel.ZIndex="300">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="20"/>
+                <TextBlock Text="Cargando..." Margin="0,8,0,0" 
+                           HorizontalAlignment="Center" 
+                           Foreground="{StaticResource MutedBrush}"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </UserControl>
 

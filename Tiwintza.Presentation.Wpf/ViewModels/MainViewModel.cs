@@ -13,6 +13,7 @@ using Tiwintza.Presentation.Wpf.ViewModels.Auditoria;
 using Tiwintza.Presentation.Wpf.ViewModels.Catalogos;
 using Tiwintza.Presentation.Wpf.ViewModels.Configuracion;
 using Tiwintza.Presentation.Wpf.ViewModels.Existencias;
+using Tiwintza.Presentation.Wpf.ViewModels.Reportes;
 
 namespace Tiwintza.Presentation.Wpf.ViewModels;
 
@@ -27,6 +28,8 @@ public partial class MainViewModel : ObservableObject
     private readonly Func<CatalogosViewModel> _catalogosFactory;
     private readonly Func<AuditoriaViewModel> _auditoriaFactory;
     private readonly Func<ConfiguracionViewModel> _configFactory;
+    private readonly Func<ReportesViewModel> _reportesFactory;
+    private readonly Func<ConsultaStockViewModel> _consultaFactory;
 
     private readonly Dictionary<string, Func<object>> _factoryMap;
     private readonly Dictionary<string, object> _cache = new();
@@ -59,6 +62,8 @@ public partial class MainViewModel : ObservableObject
                          Func<ExistenciasListViewModel> existenciasFactory,
                          Func<CatalogosViewModel> catalogosFactory,
                          Func<AuditoriaViewModel> auditoriaFactory,
+                         Func<ReportesViewModel> reportesFactory,
+                         Func<ConsultaStockViewModel> consultaFactory,
                          Func<ConfiguracionViewModel> configFactory)
     {
         _navigator = navigator;
@@ -71,6 +76,8 @@ public partial class MainViewModel : ObservableObject
         _existenciasFactory = existenciasFactory;
         _catalogosFactory = catalogosFactory;
         _auditoriaFactory = auditoriaFactory;
+        _reportesFactory = reportesFactory;
+        _consultaFactory = consultaFactory;
         _configFactory = configFactory;
 
         _factoryMap = new()
@@ -80,6 +87,8 @@ public partial class MainViewModel : ObservableObject
             ["existencias"] = () => _existenciasFactory(),
             ["catalogos"] = () => _catalogosFactory(),
             ["auditoria"] = () => _auditoriaFactory(),
+            ["reportes"] = () => _reportesFactory(),
+            ["consulta"] = () => _consultaFactory(),
             ["config"] = () => _configFactory()
         };
 
@@ -180,6 +189,8 @@ public partial class MainViewModel : ObservableObject
         _menuItems.Add(new NavigationItem("activos", "Activos", "Briefcase"));
         _menuItems.Add(new NavigationItem("existencias", "Existencias", "Warehouse"));
         _menuItems.Add(new NavigationItem("catalogos", "Catálogos", "TableCog"));
+        _menuItems.Add(new NavigationItem("consulta", "Consulta Stock", "Magnify"));
+        _menuItems.Add(new NavigationItem("reportes", "Reportes", "Printer"));
         
         if (IsAdmin)
         {
@@ -211,6 +222,21 @@ public partial class MainViewModel : ObservableObject
     {
         var vm = ResolveViewModel(e.Key);
 
+        if (Current != vm)
+        {
+            if (Current is INavigationAware oldVm)
+            {
+                oldVm.OnNavigatedFrom();
+            }
+
+            Current = vm;
+
+            if (Current is INavigationAware newVm)
+            {
+                newVm.OnNavigatedTo();
+            }
+        }
+
         if (SelectedMenu?.Key != e.Key)
         {
             var target = Menu.FirstOrDefault(m => m.Key == e.Key);
@@ -218,14 +244,6 @@ public partial class MainViewModel : ObservableObject
             {
                 SelectedMenu = target;
             }
-            else
-            {
-                Current = vm;
-            }
-        }
-        else
-        {
-            Current = vm;
         }
 
         e.AfterNavigate?.Invoke(vm);

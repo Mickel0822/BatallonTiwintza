@@ -13,9 +13,11 @@ using Tiwintza.Infrastructure.Dtos.Catalogos;
 using Tiwintza.Infrastructure.Services;
 using Tiwintza.Infrastructure.Services.Auth;
 
+using Tiwintza.Presentation.Wpf.Services.Navigation;
+
 namespace Tiwintza.Presentation.Wpf.ViewModels.Activos;
 
-public sealed partial class ActivosListViewModel : ObservableObject
+public sealed partial class ActivosListViewModel : ObservableObject, INavigationAware
 {
     private readonly IActivosService _activosService;
     private readonly IActivosCrudService _crudService;
@@ -400,6 +402,20 @@ public sealed partial class ActivosListViewModel : ObservableObject
     [RelayCommand]
     private void CerrarNotificacion()
     {
+        IsNotifyOpen = false;
+    }
+
+    public void OnNavigatedTo() { }
+
+    public void OnNavigatedFrom()
+    {
+        if (IsInForm)
+        {
+            IsInForm = false;
+            FormVm = null;
+        }
+        
+        IsActionDialogOpen = false;
         IsNotifyOpen = false;
     }
 }

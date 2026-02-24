@@ -28,6 +28,11 @@ public sealed partial class ActivoFormViewModel : ObservableValidator
     public ObservableCollection<ProveedorDto> Proveedores { get; } = new();
     public ObservableCollection<ActivoMovimientoDto> Movimientos { get; } = new();
     [ObservableProperty] private string? codigoInventarioError;
+    [ObservableProperty] private string? formValidationMessage;
+
+    // Propiedades para nuevo movimiento
+    [ObservableProperty] private long? nuevoMovimientoAreaDestinoId;
+    [ObservableProperty] private string? nuevoMovimientoObservacion;
 
     // ===== Campos =====
     [ObservableProperty, NotifyDataErrorInfo]
@@ -73,6 +78,7 @@ public sealed partial class ActivoFormViewModel : ObservableValidator
     [ObservableProperty] private string? nuevoProveedorContacto;
     [ObservableProperty] private string? nuevoProveedorTelefono;
     [ObservableProperty] private string? nuevoProveedorEmail;
+    [ObservableProperty] private bool isBusy;
 
     public bool DebeMostrarParametrosContables => DocumentoAutorizacion;
     public bool PuedeGuardarProveedor => !IsProveedorQuickAddBusy
@@ -85,10 +91,12 @@ public sealed partial class ActivoFormViewModel : ObservableValidator
             ? "Porcentaje anual aproximado"
             : $"≈ {(double)((DepreciacionMensual!.Value * 12m) / (ValorUnitario == 0 ? 1 : ValorUnitario)) * 100.0:0.##}% anual";
 
-    public bool PuedeGuardar => !HasErrors
+    public bool PuedeGuardar => !IsBusy && !HasErrors
                                 && !string.IsNullOrWhiteSpace(CodigoInventario)
                                 && !string.IsNullOrWhiteSpace(Nombre)
                                 && TipoId is not null && EstadoId is not null && AreaId is not null;
+
+    public bool PuedeTrasladar => EsEdicion && NuevoMovimientoAreaDestinoId is not null && NuevoMovimientoAreaDestinoId != AreaId;
 
     public event Action<long>? Guardado;
     public event Action? Cancelado;
@@ -186,17 +194,35 @@ public sealed partial class ActivoFormViewModel : ObservableValidator
     private async Task GuardarAsync()
     {
         ValidateAllProperties();
-        if (!PuedeGuardar) return;
+        
+        // Mostrar mensaje de validación si hay campos faltantes
+        if (!PuedeGuardar)
+        {
+            var faltantes = new System.Collections.Generic.List<string>();
+            if (string.IsNullOrWhiteSpace(CodigoInventario)) faltantes.Add("Código de inventario");
+            if (string.IsNullOrWhiteSpace(Nombre)) faltantes.Add("Descripción/especie");
+            if (TipoId is null) faltantes.Add("Tipo");
+            if (EstadoId is null) faltantes.Add("Estado");
+            if (AreaId is null) faltantes.Add("Área");
+            
+            FormValidationMessage = faltantes.Count > 0 
+                ? $"Complete los campos obligatorios: {string.Join(", ", faltantes)}"
+                : "Revise los campos del formulario";
+            return;
+        }
+        
+        FormValidationMessage = null;
 
         CodigoInventarioError = null;
 
-        var fecCompra = FechaCompraDateTime.HasValue ? DateOnly.FromDateTime(FechaCompraDateTime.Value.Date) : (DateOnly?)null;
-        var vidaUtil = DocumentoAutorizacion ? VidaUtilMeses : null;
-        var depreciacion = DocumentoAutorizacion ? DepreciacionMensual : null;
-        var garantia = DocumentoAutorizacion ? GarantiaMeses : null;
-
+        IsBusy = true;
         try
         {
+            var fecCompra = FechaCompraDateTime.HasValue ? DateOnly.FromDateTime(FechaCompraDateTime.Value.Date) : (DateOnly?)null;
+            var vidaUtil = DocumentoAutorizacion ? VidaUtilMeses : null;
+            var depreciacion = DocumentoAutorizacion ? DepreciacionMensual : null;
+            var garantia = DocumentoAutorizacion ? GarantiaMeses : null;
+
             if (EsEdicion && Id is not null)
             {
                 var dto = new ActivoUpdateDto
@@ -252,14 +278,79 @@ public sealed partial class ActivoFormViewModel : ObservableValidator
                 Guardado?.Invoke(nuevoId);
             }
         }
-        catch (DuplicateCodeException)
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
         {
-            ClearErrors(nameof(CodigoInventario));
-            CodigoInventarioError = "El código ya existe. Ingrese uno diferente.";
-            OnPropertyChanged(nameof(CodigoInventario));
-            OnPropertyChanged(nameof(PuedeGuardar));
+            var innerMessage = dbEx.InnerException?.Message ?? dbEx.Message;
+            if (innerMessage.Contains("duplicate") || innerMessage.Contains("unique"))
+            {
+                ClearErrors(nameof(CodigoInventario));
+                CodigoInventarioError = "El código ya existe. Ingrese uno diferente.";
+                OnPropertyChanged(nameof(CodigoInventario));
+                OnPropertyChanged(nameof(PuedeGuardar));
+                
+                // También mostrar en el banner general
+                FormValidationMessage = "El código de inventario ya existe.";
+            }
+            else if (innerMessage.Contains("foreign key") || innerMessage.Contains("constraint"))
+            {
+                FormValidationMessage = "Error de validación de datos relacionados. Verifique los campos seleccionados.";
+            }
+            else
+            {
+                FormValidationMessage = $"Error al guardar: {innerMessage}";
+            }
+        }
+        catch (Exception ex)
+        {
+            FormValidationMessage = $"Error inesperado: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
+
+    [RelayCommand]
+    private async Task TrasladarActivoAsync()
+    {
+        if (!PuedeTrasladar || Id is null) return;
+        
+        FormValidationMessage = null;
+        
+        try
+        {
+            await _crud.TrasladarAsync(
+                Id.Value,
+                NuevoMovimientoAreaDestinoId!.Value,
+                DateOnly.FromDateTime(DateTime.Today),
+                NuevoMovimientoObservacion,
+                null // usuario se tomará del contexto actual
+            );
+            
+            // Actualizar área actual del activo
+            AreaId = NuevoMovimientoAreaDestinoId;
+            
+            // Recargar historial de movimientos
+            Movimientos.Clear();
+            var movimientos = await _crud.MovimientosAsync(Id.Value);
+            foreach (var m in movimientos)
+            {
+                Movimientos.Add(m);
+            }
+            
+            // Limpiar formulario de movimiento
+            NuevoMovimientoAreaDestinoId = null;
+            NuevoMovimientoObservacion = null;
+            
+            FormValidationMessage = "Traslado realizado con éxito";
+        }
+        catch (Exception ex)
+        {
+            FormValidationMessage = $"Error al trasladar: {ex.Message}";
+        }
+    }
+
+    partial void OnNuevoMovimientoAreaDestinoIdChanged(long? value) => OnPropertyChanged(nameof(PuedeTrasladar));
 
     [RelayCommand]
     private void MostrarAgregarProveedor()

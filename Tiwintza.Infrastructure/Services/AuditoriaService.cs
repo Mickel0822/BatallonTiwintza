@@ -186,6 +186,23 @@ public sealed class AuditoriaService : IAuditoriaService
                     return mensaje.GetString();
                 if (doc.RootElement.TryGetProperty("message", out var message) && message.ValueKind == JsonValueKind.String)
                     return message.GetString();
+
+                // Intento de parseo genérico amigable
+                var props = new List<string>();
+                foreach (var prop in doc.RootElement.EnumerateObject())
+                {
+                    if (prop.Value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined) continue;
+
+                    // Ignorar propiedades de auditoria interna o ids complejos sin nombre claro si hay muchos
+                    if (prop.NameEquals("id") && doc.RootElement.EnumerateObject().Count() > 1) continue; 
+
+                    var val = prop.Value.ToString();
+                    if (val.Length > 50) val = val[..47] + "...";
+                    
+                    props.Add($"{prop.Name}: {val}");
+                }
+                
+                if (props.Count > 0) return string.Join(", ", props);
             }
         }
         catch (JsonException)

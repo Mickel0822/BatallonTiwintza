@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario | Batallón Tiwintza</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background-color: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+        }
+
+        .brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem 4rem;
+            scroll-behavior: smooth;
+        }
+
+        section {
+            display: none;
+            animation: fadeIn 0.4s ease;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 { font-size: 2.5rem; margin-bottom: 1rem; color: var(--text-main); }
+        h2 { font-size: 1.75rem; margin-top: 2rem; margin-bottom: 1rem; color: var(--text-main); }
+        h3 { font-size: 1.25rem; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-main); }
+        p { line-height: 1.6; color: var(--text-muted); margin-bottom: 1rem; }
+        
+        ul { margin-left: 1.5rem; margin-bottom: 1.5rem; color: var(--text-muted); }
+        li { margin-bottom: 0.5rem; }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+
+        .step-num {
+            display: inline-flex;
+            width: 28px;
+            height: 28px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+
+        .info-box {
+            background-color: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1.5rem 0;
+            color: var(--text-muted);
+        }
+
+        .btn-simulate {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 1rem;
+            transition: background 0.2s;
+        }
+
+        .btn-simulate:hover { background-color: var(--primary-dark); }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .feature-item {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+        }
+
+        .feature-icon {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <span>🛡️</span> Batallón Tiwintza
+        </div>
+        <div class="nav-items">
+            <div class="nav-item active" onclick="showSection('intro')">Introducción</div>
+            <div class="nav-item" onclick="showSection('login')">Inicio de Sesión</div>
+            <div class="nav-item" onclick="showSection('dashboard')">Dashboard</div>
+            <div class="nav-item" onclick="showSection('activos')">Gestión de Activos</div>
+            <div class="nav-item" onclick="showSection('existencias')">Existencias</div>
+            <div class="nav-item" onclick="showSection('auditoria')">Auditoría</div>
+            <div class="nav-item" onclick="showSection('usuarios')">Usuarios</div>
+            <div class="nav-item" onclick="showSection('catalogos')">Catálogos</div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        
+        <!-- INTRODUCCIÓN -->
+        <section id="intro" class="active">
+            <h1>Manual de Usuario - Administrador</h1>
+            <p>Bienvenido al manual interactivo del Sistema de Gestión de Activos e Inventario del Batallón Tiwintza.</p>
+            <p>Este documento está diseñado para guiarlo a través de las funcionalidades disponibles para el perfil de <strong>Administrador</strong>. Como administrador, usted tiene acceso total al sistema, permitiéndole gestionar usuarios, activos, inventarios y configuraciones críticas.</p>
+            
+            <div class="info-box">
+                <strong>Nota:</strong> Este manual asume que usted ya cuenta con credenciales de acceso válidas. Si no las tiene, contacte con el soporte técnico.
+            </div>
+
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">👥</div>
+                    <h3>Gestión Total</h3>
+                    <p>Cree, edite y administre usuarios y permisos.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📦</div>
+                    <h3>Control de Activos</h3>
+                    <p>Registro, baja y traslado de activos fijos.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <h3>Reportes</h3>
+                    <p>Visualice métricas clave y genere reportes detallados.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- LOGIN -->
+        <section id="login">
+            <h1>Inicio de Sesión</h1>
+            <p>Al abrir la aplicación, la primera pantalla que verá será el formulario de inicio de sesión.</p>
+            
+            <div class="card">
+                <h3>Pasos para ingresar:</h3>
+                <br>
+                <p><span class="step-num">1</span> Ingrese su <strong>Nombre de Usuario</strong>.</p>
+                <p><span class="step-num">2</span> Ingrese su <strong>Contraseña</strong>.</p>
+                <p><span class="step-num">3</span> Presione el botón <strong style="color: var(--primary);">Entrar</strong>.</p>
+            </div>
+
+            <div class="info-box">
+                Si detecta problemas de acceso, verifique que la conexión a la base de datos esté activa.
+            </div>
+        </section>
+
+        <!-- DASHBOARD -->
+        <section id="dashboard">
+            <h1>Dashboard Principal</h1>
+            <p>Una vez autenticado, aterrizará en el Dashboard. Aquí encontrará un resumen ejecutivo del estado actual del batallón.</p>
+
+            <h2>Elementos Clave</h2>
+            
+            <div class="card">
+                <h3>📈 Tarjetas de KPI</h3>
+                <p>En la parte superior verá tres tarjetas principales:</p>
+                <ul>
+                    <li><strong>Activos Operativos:</strong> Total de activos en buen estado.</li>
+                    <li><strong>Items en Crítico:</strong> Existencias con stock bajo.</li>
+                    <li><strong>Bajas del Mes:</strong> Cantidad de activos dados de baja recientemente.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>⚡ Accesos Rápidos</h3>
+                <p>Botones grandes para realizar acciones frecuentes con un solo clic:</p>
+                <ul>
+                    <li><strong>Registrar Activo:</strong> Abre el formulario de alta de activos.</li>
+                    <li><strong>Registrar Ingreso:</strong> Entrada rápida de stock.</li>
+                    <li><strong>Reporte por Área:</strong> Genera un listado de bienes por ubicación.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>📋 Últimos Movimientos</h3>
+                <p>Tabla que muestra las acciones más recientes realizadas por todos los usuarios (Ingresos, Salidas, Traslados).</p>
+            </div>
+        </section>
+
+        <!-- ACTIVOS -->
+        <section id="activos">
+            <h1>Gestión de Activos</h1>
+            <p>El módulo de activos le permite llevar el control del inventario fijo (Computadoras, Muebles, Vehículos, etc.).</p>
+
+            <div class="feature-grid">
+                <div class="feature-item" onclick="alert('Funcionalidad explicada: Ver Listado')" style="cursor: help;">
+                    <h3>🔍 Ver Listado</h3>
+                    <p>Visualice todos los activos con filtros por código, nombre o estado.</p>
+                </div>
+                <div class="feature-item">
+                    <h3>➕ Nuevo Activo</h3>
+                    <p>Complete el formulario con código, descripción, marca, modelo y serie.</p>
+                </div>
+                <div class="feature-item">
+                    <h3>📝 Editar</h3>
+                    <p>Modifique detalles de un activo existente si hubo algún error de registro.</p>
+                </div>
+                <div class="feature-item">
+                    <h3>🚚 Traslados</h3>
+                    <p>Mueva un activo de un área a otra registrando el responsable.</p>
+                </div>
+                <div class="feature-item" style="border-color: var(--danger);">
+                    <h3>❌ Bajas</h3>
+                    <p>Marque activos como "Mal estado" u "Obsoleto" para retirarlos del inventario activo.</p>
+                </div>
+            </div>
+
+            <h2 style="margin-top:3rem">Proceso de Registro</h2>
+            <p><span class="step-num">1</span> Vaya a la pestaña <strong>Activos</strong>.</p>
+            <p><span class="step-num">2</span> Haga clic en <strong>"Nuevo Activo"</strong>.</p>
+            <p><span class="step-num">3</span> Llene los campos obligatorios.</p>
+            <p><span class="step-num">4</span> Guarde. El sistema generará el registro y actualizará los KPIs.</p>
+        </section>
+
+        <!-- EXISTENCIAS -->
+        <section id="existencias">
+            <h1>Control de Existencias</h1>
+            <p>Módulo destinado a consumibles (Papelería, Munición, Repuestos, etc.).</p>
+
+            <div class="card">
+                <h3>📥 Registrar Ingreso</h3>
+                <p>Use esta opción cuando lleguen nuevos suministros al batallón. Aumentará el stock disponible.</p>
+            </div>
+
+            <div class="card">
+                <h3>📤 Registrar Salida</h3>
+                <p>Use esta opción al entregar suministros al personal. Descontará del stock inventariado.</p>
+            </div>
+
+            <div class="info-box">
+                <strong>Alerta:</strong> Si el stock de un item cae por debajo del mínimo, aparecerá en el Dashboard como "Crítico".
+            </div>
+        </section>
+
+        <!-- AUDITORIA -->
+        <section id="auditoria">
+            <h1>Auditoría y Seguridad</h1>
+            <p>Como Administrador, puede ver <strong>todo</strong> lo que ocurre en el sistema.</p>
+
+            <div class="card">
+                <h3>👁️ Visor de Logs</h3>
+                <p>En la sección de Auditoría encontrará un registro inmutable:</p>
+                <ul>
+                    <li>Quién hizo la acción (Usuario).</li>
+                    <li>Qué hizo (Crear, Editar, Eliminar, Login).</li>
+                    <li>Cuándo lo hizo (Fecha y Hora exacta).</li>
+                    <li>Detalles técnicos (IP, valores anteriores y nuevos).</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- USUARIOS -->
+        <section id="usuarios">
+            <h1>Gestión de Usuarios</h1>
+            <p>Solo los administradores pueden acceder a esta sección en <strong>Configuración</strong>.</p>
+
+            <h2>Acciones Disponibles</h2>
+            <ul>
+                <li><strong>Crear Usuario:</strong> Dar de alta nuevo personal con Rol (Admin o Usuario).</li>
+                <li><strong>Resetear Contraseña:</strong> Si un usuario olvida su clave.</li>
+                <li><strong>Desactivar Cuenta:</strong> Para personal que ya no pertenece a la unidad.</li>
+            </ul>
+
+            <div class="info-box">
+                Cuide a quién otorga el rol de <strong>Administrador</strong>, ya que tendrá control total sobre el sistema.
+            </div>
+        </section>
+
+        <!-- CATALOGOS -->
+        <section id="catalogos">
+            <h1>Catálogos del Sistema</h1>
+            <p>Mantenga la consistencia de los datos configurando las listas desplegables.</p>
+            <p>Puede administrar:</p>
+            <div class="feature-grid">
+                <div class="feature-item">Categorías</div>
+                <div class="feature-item">Marcas</div>
+                <div class="feature-item">Áreas / Ubicaciones</div>
+                <div class="feature-item">Unidades de Medida</div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('section').forEach(el => el.classList.remove('active'));
+            // Remove active class from nav items
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Highlight nav item - find the one with the onclick matching the sectionId
+            const navItems = document.querySelectorAll('.nav-item');
+            for(let item of navItems) {
+                if(item.getAttribute('onclick').includes(sectionId)) {
+                    item.classList.add('active');
+                    break;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

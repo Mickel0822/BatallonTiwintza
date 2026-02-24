@@ -179,9 +179,19 @@ public sealed partial class ExistenciaSalidaViewModel : ObservableValidator
             var salidaId = await _crud.RegistrarSalidaAsync(dto);
             Guardado?.Invoke(salidaId);
         }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
+        {
+            var innerMessage = dbEx.InnerException?.Message ?? dbEx.Message;
+            if (innerMessage.Contains("duplicate"))
+                ErrorMessage = "Ya existe un registro con estos datos.";
+            else if (innerMessage.Contains("foreign key") || innerMessage.Contains("constraint"))
+                ErrorMessage = "Error de validación de datos relacionados. Verifique los campos.";
+            else
+                ErrorMessage = $"Error al guardar en base de datos: {innerMessage}";
+        }
         catch (Exception ex)
         {
-            ErrorMessage = ex.Message;
+            ErrorMessage = $"Error inesperado: {ex.Message}";
         }
         finally
         {

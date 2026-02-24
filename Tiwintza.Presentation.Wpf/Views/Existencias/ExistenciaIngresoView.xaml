@@ -13,6 +13,9 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
         <conv:StringNullToVisibilityConverter x:Key="StringNullToVisibility"/>
+        <conv:NullToBooleanConverter x:Key="NullToBoolean"/>
+        <conv:InverseBooleanConverter x:Key="InverseBoolean"/>
+        <conv:NullToVisibilityConverter x:Key="NullToVisibility"/>
     </UserControl.Resources>
 
     <Grid Margin="18">
@@ -24,7 +27,7 @@
 
         <!-- Titulo -->
         <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock Text="Existencias / Registrar ingreso" Style="{StaticResource Caption}" Foreground="{DynamicResource SecondaryBrush}"/>
+            <TextBlock Text="Existencias / Registrar ingreso" Style="{StaticResource Caption}" Foreground="{DynamicResource MutedBrush}"/>
             <TextBlock Text="Registrar Ingreso" Style="{StaticResource H1}"/>
             <TextBlock Text="Registre una compra o ingreso de inventario" Style="{StaticResource Caption}"/>
         </StackPanel>
@@ -57,26 +60,33 @@
                             <StackPanel Grid.Column="0" Orientation="Vertical">
                                 <TextBlock Text="Proveedor" Style="{StaticResource Caption}"/>
                                 <DockPanel>
-                                    <ComboBox Width="Auto"
-                                              ItemsSource="{Binding Proveedores}"
-                                              SelectedValue="{Binding ProveedorId, Mode=TwoWay}"
-                                              SelectedValuePath="Id"
-                                              DisplayMemberPath="RazonSocial"
-                                              Style="{StaticResource InputComboBox}"/>
+                                    <Button Style="{StaticResource GhostButton.Small}"
+                                            Command="{Binding LimpiarProveedorCommand}"
+                                            DockPanel.Dock="Right" Margin="4,0,0,0"
+                                            ToolTip="Limpiar selección"
+                                            Visibility="{Binding ProveedorId, Converter={StaticResource NullToVisibility}}">
+                                        <iconPacks:PackIconMaterial Kind="Close" Width="14" Height="14"/>
+                                    </Button>
                                     <Button Style="{StaticResource GhostButton.Small}"
                                             Command="{Binding MostrarProveedorRapidoCommand}"
+                                            IsEnabled="{Binding ProveedorId, Converter={StaticResource NullToBoolean}}"
                                             DockPanel.Dock="Right" Margin="8,0,0,0">
                                         <StackPanel Orientation="Horizontal">
                                             <iconPacks:PackIconMaterial Kind="AccountPlus" Width="16" Height="16" Margin="0,0,6,0"/>
                                             <TextBlock Text="Nuevo"/>
                                         </StackPanel>
                                     </Button>
+                                    <ComboBox Width="Auto"
+                                              ItemsSource="{Binding Proveedores}"
+                                              SelectedValue="{Binding ProveedorId, Mode=TwoWay}"
+                                              SelectedValuePath="Id"
+                                              DisplayMemberPath="RazonSocial"
+                                              Style="{StaticResource InputComboBox}"/>
                                 </DockPanel>
                             </StackPanel>
 
                             <StackPanel Grid.Column="1" Orientation="Vertical" Margin="16,0,0,0">
-                                <TextBlock Text="Numero de factura" Style="{StaticResource Caption}"/>
-                                <TextBox Style="{StaticResource InputTextBox}" Text="{Binding NumeroFactura}"/>
+                                <!-- Reubicado a detalle -->
                             </StackPanel>
 
                             <StackPanel Grid.Column="2" Orientation="Vertical" Margin="16,0,0,0">
@@ -154,7 +164,13 @@
                 <!-- Detalle de items -->
                 <Border Background="White" CornerRadius="12" Padding="20" BorderBrush="{DynamicResource GridBorderBrush}" BorderThickness="1">
                     <StackPanel Orientation="Vertical">
-                        <TextBlock Text="Detalle de items" Style="{StaticResource H3}"/>
+                        <DockPanel LastChildFill="False" Margin="0,0,0,16">
+                            <TextBlock Text="Detalle de items" Style="{StaticResource H3}" DockPanel.Dock="Left"/>
+                            <StackPanel Orientation="Vertical" Width="200" DockPanel.Dock="Right">
+                                <TextBlock Text="Numero de factura *" Style="{StaticResource Caption}"/>
+                                <TextBox Style="{StaticResource InputTextBox}" Text="{Binding NumeroFactura, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </DockPanel>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -167,18 +183,26 @@
                             <StackPanel Grid.Column="0" Orientation="Vertical">
                                 <TextBlock Text="Producto" Style="{StaticResource Caption}"/>
                                 <DockPanel>
-                                    <ComboBox ItemsSource="{Binding Productos}"
-                                              SelectedItem="{Binding ProductoSeleccionado, Mode=TwoWay}"
-                                              DisplayMemberPath="Display"
-                                              Style="{StaticResource InputComboBox}"/>
+                                    <Button Style="{StaticResource GhostButton.Small}"
+                                            Command="{Binding LimpiarProductoCommand}"
+                                            DockPanel.Dock="Right" Margin="4,0,0,0"
+                                            ToolTip="Limpiar selección"
+                                            Visibility="{Binding ProductoSeleccionado, Converter={StaticResource NullToVisibility}}">
+                                        <iconPacks:PackIconMaterial Kind="Close" Width="14" Height="14"/>
+                                    </Button>
                                     <Button Style="{StaticResource GhostButton.Small}"
                                             Command="{Binding MostrarProductoRapidoCommand}"
+                                            IsEnabled="{Binding PuedeAgregarNuevoProducto}"
                                             DockPanel.Dock="Right" Margin="8,0,0,0">
                                         <StackPanel Orientation="Horizontal">
                                             <iconPacks:PackIconMaterial Kind="Plus" Width="16" Height="16" Margin="0,0,6,0"/>
                                             <TextBlock Text="Nuevo"/>
                                         </StackPanel>
                                     </Button>
+                                    <ComboBox ItemsSource="{Binding Productos}"
+                                              SelectedItem="{Binding ProductoSeleccionado, Mode=TwoWay}"
+                                              DisplayMemberPath="Display"
+                                              Style="{StaticResource InputComboBox}"/>
                                 </DockPanel>
                             </StackPanel>
 
@@ -191,11 +215,10 @@
                             </StackPanel>
 
                             <StackPanel Grid.Column="2" Orientation="Vertical" Margin="12,0,0,0">
-                                <TextBlock Text="Costo unitario" Style="{StaticResource Caption}"/>
+                                <TextBlock Text="Costo unitario (USD)" Style="{StaticResource Caption}"/>
                                 <TextBox Style="{StaticResource InputTextBox}" 
-                                         Text="{Binding ProductoCostoUnitario, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
-                                         PreviewTextInput="ValidarDecimales"
-                                         MaxLength="10"/>
+                                         Text="{Binding ProductoCostoUnitario, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:F2}}"
+                                         Tag="0,00"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="3" Orientation="Vertical" Margin="16,0,0,0" VerticalAlignment="Bottom">
@@ -248,9 +271,11 @@
                                                  Height="80"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Vertical">
-                                        <TextBlock Text="Unidad" Style="{StaticResource Caption}"/>
+                                        <TextBlock Text="Unidad (cantidad)" Style="{StaticResource Caption}"/>
                                         <TextBox Style="{StaticResource InputTextBox}"
-                                                 Text="{Binding NuevoProductoUnidad, UpdateSourceTrigger=PropertyChanged}"/>
+                                                 Text="{Binding NuevoProductoUnidad, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
+                                                 PreviewTextInput="ValidarSoloEnteros"
+                                                 MaxLength="5"/>
                                     </StackPanel>
                                 </Grid>
 
@@ -361,8 +386,7 @@
 
         <!-- Acciones -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Style="{StaticResource GhostButton.Small}" Command="{Binding VolverCommand}" Content="Volver"/>
-            <Button Style="{StaticResource GhostButton.Small}" Command="{Binding CancelarCommand}" Content="Cancelar" Margin="12,0,0,0"/>
+            <Button Style="{StaticResource GhostButton.Small}" Command="{Binding CancelarCommand}" Content="Cancelar"/>
             <Button Style="{StaticResource PrimaryButton}" Command="{Binding GuardarCommand}" IsEnabled="{Binding PuedeGuardar}" Margin="12,0,0,0">
                 <StackPanel Orientation="Horizontal">
                     <iconPacks:PackIconMaterial Kind="ContentSave" Width="16" Height="16" Margin="0,0,6,0"/>
@@ -370,5 +394,17 @@
                 </StackPanel>
             </Button>
         </StackPanel>
+
+        <!-- Loading Overlay -->
+        <Border Grid.RowSpan="99" Background="#80FFFFFF" 
+                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" 
+                Panel.ZIndex="100">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="20"/>
+                <TextBlock Text="Guardando..." Margin="0,8,0,0" 
+                           HorizontalAlignment="Center" 
+                           Foreground="{StaticResource MutedBrush}"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </UserControl>

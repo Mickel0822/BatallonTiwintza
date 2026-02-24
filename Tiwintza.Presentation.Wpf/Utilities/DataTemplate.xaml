@@ -7,12 +7,14 @@
     xmlns:viewsExist="clr-namespace:Tiwintza.Presentation.Wpf.Views.Existencias"
     xmlns:viewsCat="clr-namespace:Tiwintza.Presentation.Wpf.Views.Catalogos"
     xmlns:viewsAud="clr-namespace:Tiwintza.Presentation.Wpf.Views.Auditoria"
+    xmlns:viewsRep="clr-namespace:Tiwintza.Presentation.Wpf.Views.Reportes"
     xmlns:viewsConfig="clr-namespace:Tiwintza.Presentation.Wpf.Views.Configuracion"
     xmlns:vmDash="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels"
     xmlns:vmAct="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Activos"
     xmlns:vmExist="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Existencias"
     xmlns:vmCat="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Catalogos"
     xmlns:vmAud="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Auditoria"
+    xmlns:vmRep="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Reportes"
     xmlns:vmConfig="clr-namespace:Tiwintza.Presentation.Wpf.ViewModels.Configuracion">
 
     <!-- Dashboard -->
@@ -45,6 +47,9 @@
     <DataTemplate DataType="{x:Type vmExist:ExistenciaSalidaViewModel}">
         <viewsExist:ExistenciaSalidaView/>
     </DataTemplate>
+    <DataTemplate DataType="{x:Type vmExist:ConsultaStockViewModel}">
+        <viewsExist:ConsultaStockView/>
+    </DataTemplate>
 
     <!-- Catalogos -->
     <DataTemplate DataType="{x:Type vmCat:CatalogosViewModel}">
@@ -54,6 +59,11 @@
     <!-- Auditoria -->
     <DataTemplate DataType="{x:Type vmAud:AuditoriaViewModel}">
         <viewsAud:AuditoriaView/>
+    </DataTemplate>
+
+    <!-- Reportes -->
+    <DataTemplate DataType="{x:Type vmRep:ReportesViewModel}">
+        <viewsRep:ReportesView/>
     </DataTemplate>
 
     <!-- Configuraci?n -->
