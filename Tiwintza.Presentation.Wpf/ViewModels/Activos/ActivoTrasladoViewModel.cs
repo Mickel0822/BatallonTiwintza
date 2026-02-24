@@ -22,6 +22,7 @@ public sealed partial class ActivoTrasladoViewModel : ObservableObject
     [ObservableProperty] private long? areaDestinoId;
     [ObservableProperty] private DateTime? fecha;
     [ObservableProperty] private string? observacion;
+    [ObservableProperty] private bool isBusy;
 
     public bool PuedeTrasladar => AreaDestinoId is not null && Fecha is not null;
 
@@ -57,17 +58,28 @@ public sealed partial class ActivoTrasladoViewModel : ObservableObject
     private void Volver() => VolverSolicitado?.Invoke();
 
     [RelayCommand]
+    private void Cancelar() => VolverSolicitado?.Invoke();
+
+    [RelayCommand]
     private async Task TrasladarAsync()
     {
         if (!PuedeTrasladar) return;
 
-        await _crud.TrasladarAsync(
-            ActivoId,
-            AreaDestinoId!.Value,
-            DateOnly.FromDateTime(Fecha!.Value.Date),
-            Observacion,
-            null);
+        IsBusy = true;
+        try
+        {
+            await _crud.TrasladarAsync(
+                ActivoId,
+                AreaDestinoId!.Value,
+                DateOnly.FromDateTime(Fecha!.Value.Date),
+                Observacion,
+                null);
 
-        TrasladarSolicitado?.Invoke();
+            TrasladarSolicitado?.Invoke();
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 }

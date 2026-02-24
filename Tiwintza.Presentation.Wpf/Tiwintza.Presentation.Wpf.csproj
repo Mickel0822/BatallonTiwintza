@@ -8,6 +8,11 @@
     <UseWPF>true</UseWPF>
     <UserSecretsId>78842df6-a31b-4f13-a488-610c36bd826c</UserSecretsId>
     <Platforms>AnyCPU;x64</Platforms>
+    <!-- MSIX Packaging Support -->
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <WindowsPackageType>None</WindowsPackageType>
+    <ProjectPriIndexName>$(AssemblyName)</ProjectPriIndexName>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>

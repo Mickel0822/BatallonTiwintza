@@ -1,5 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using Tiwintza.Infrastructure.Dtos.Auditoria;
 
 namespace Tiwintza.Presentation.Wpf.ViewModels.Auditoria;
@@ -54,4 +56,35 @@ public sealed class SelectOption
     public override string ToString() => Display;
 
     public static SelectOption Todos(string display) => new(display, null);
+}
+
+public sealed class AuditDetailItem
+{
+    public string Label { get; init; } = string.Empty;
+    public string Value { get; init; } = string.Empty;
+    public string IconKind { get; init; } = "InformationOutline";
+    public bool IsFullWidth { get; init; }
+    public bool IsImportant { get; init; }
+}
+
+public sealed partial class AuditEventViewModel : ObservableObject
+{
+    public AuditEventViewModel(string title, string subtitle, string icon, string description, List<AuditoriaItemModel> rawItems)
+    {
+        Title = title;
+        Subtitle = subtitle;
+        IconKind = icon;
+        Description = description;
+        RawItems = rawItems;
+    }
+
+    public string Title { get; }
+    public string Subtitle { get; }
+    public string IconKind { get; }
+    public string Description { get; }
+    public List<AuditoriaItemModel> RawItems { get; }
+    
+    // Propiedades extraidas para el detalle
+    public string? Observacion { get; set; }
+    public ObservableCollection<AuditDetailItem> DetallePropiedades { get; } = new();
 }

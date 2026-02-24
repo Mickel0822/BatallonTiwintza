@@ -12,7 +12,7 @@
              Loaded="OnLoaded">
 
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <!-- Local resources removed - using global BoolToVis from Theme.xaml -->
     </UserControl.Resources>
 
     <Grid>
@@ -39,24 +39,28 @@
                 </Grid.RowDefinitions>
 
                 <!-- Titulo + Acciones globales -->
-                <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,12">
-                    <TextBlock Text="Activos" Style="{StaticResource H1}" DockPanel.Dock="Left"/>
-                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                        <Button Style="{StaticResource OutlineButton.Small}" HorizontalAlignment="Center" Command="{Binding ExportarExcelCommand}">
-                            <StackPanel Orientation="Horizontal">
-                                <iconPacks:PackIconMaterial Kind="FileExcelOutline" Width="16" Height="16" Margin="0,0,8,0"/>
-                                <TextBlock Text="Excel"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding NuevoCommand}" Margin="8,0,0,0"
-                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
-                            <StackPanel Orientation="Horizontal">
-                                <iconPacks:PackIconMaterial Kind="Plus" Width="16" Height="16" Margin="0,0,8,0"/>
-                                <TextBlock Text="Nuevo"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-                </DockPanel>
+                <StackPanel Grid.Row="0" Margin="0,0,0,24">
+                    <TextBlock Text="Activos / General" Style="{StaticResource Caption}" Foreground="{DynamicResource MutedBrush}"/>
+                    <DockPanel LastChildFill="False">
+                        <TextBlock Text="Activos" Style="{StaticResource H1}" DockPanel.Dock="Left"/>
+                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                            <Button Style="{StaticResource OutlineButton.Small}" HorizontalAlignment="Center" Command="{Binding ExportarExcelCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <iconPacks:PackIconMaterial Kind="FileExcelOutline" Width="16" Height="16" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Excel"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource PrimaryButton}" Command="{Binding NuevoCommand}" Margin="8,0,0,0"
+                                    Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <iconPacks:PackIconMaterial Kind="Plus" Width="16" Height="16" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Nuevo"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </DockPanel>
+                    <TextBlock Text="Gestione el inventario de activos fijos, realice búsquedas y reportes." Style="{StaticResource Caption}"/>
+                </StackPanel>
 
                 <!-- KPIs -->
                 <UniformGrid Grid.Row="1" Columns="3" Margin="0,0,0,24">
@@ -385,5 +389,16 @@
             </Border>
         </Grid>
 
+        <!-- Loading Overlay -->
+        <Border Grid.RowSpan="99" Background="#80FFFFFF" 
+                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" 
+                Panel.ZIndex="100">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="20"/>
+                <TextBlock Text="Cargando..." Margin="0,8,0,0" 
+                           HorizontalAlignment="Center" 
+                           Foreground="{StaticResource MutedBrush}"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </UserControl>

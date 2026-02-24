@@ -267,7 +267,7 @@ public sealed class ExistenciasCrudService : IExistenciasCrudService
         if (existencia.StockActual < dto.Cantidad)
             throw new InvalidOperationException("No hay stock suficiente para registrar la salida.");
 
-        await using var tx = await _dbFactory.CreateDbContextAsync(ct).Result.Database.BeginTransactionAsync(ct);
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
 
         // Solo insertamos la salida; el TRIGGER descuenta stock y actualiza existencia_area_stock
         var salida = new Salida

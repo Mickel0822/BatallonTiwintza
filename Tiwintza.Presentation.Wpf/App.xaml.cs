@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+锘縰sing Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -20,6 +20,7 @@ using Tiwintza.Presentation.Wpf.Services.Windows;
 using Tiwintza.Presentation.Wpf.ViewModels;
 using Tiwintza.Presentation.Wpf.ViewModels.Activos;
 using Tiwintza.Presentation.Wpf.ViewModels.Existencias;
+using Tiwintza.Presentation.Wpf.ViewModels.Reportes;
 using Tiwintza.Presentation.Wpf.Views.Existencias;
 using Tiwintza.Presentation.Wpf.Views;
 using Tiwintza.Infrastructure;
@@ -61,14 +62,14 @@ namespace Tiwintza.Presentation.Wpf
                 })
                 .ConfigureServices((ctx, services) =>
                 {
-                    // ---- DBContext desde configuraci髇 (externa/secret/env) ----
+                    // ---- DBContext desde configuraci贸n (externa/secret/env) ----
                     var csApp = ctx.Configuration.GetConnectionString("AppDb");
                     var csMain = ctx.Configuration.GetConnectionString("MainDb");
                     var connString = !string.IsNullOrWhiteSpace(csApp) ? csApp : csMain;
 
                     if (string.IsNullOrWhiteSpace(connString))
                         throw new InvalidOperationException(
-                            $"Falta la cadena de conexi髇 'ConnectionStrings:AppDb' (o 'MainDb'). " +
+                            $"Falta la cadena de conexi贸n 'ConnectionStrings:AppDb' (o 'MainDb'). " +
                             $"Revise/edite el archivo: {ExternalConfigPath}");
 
                     services.AddSingleton<ITenantAccessor, TenantAccessor>();
@@ -117,6 +118,8 @@ namespace Tiwintza.Presentation.Wpf
                     services.AddTransient<CatalogosViewModel>();
                     services.AddTransient<AuditoriaViewModel>();
                     services.AddTransient<ConfiguracionViewModel>();
+                    services.AddTransient<ReportesViewModel>();
+                    services.AddTransient<ConsultaStockViewModel>();
 
                     services.AddTransient<Func<ExistenciaIngresoViewModel>>(sp =>
                             () => sp.GetRequiredService<ExistenciaIngresoViewModel>());
@@ -127,13 +130,16 @@ namespace Tiwintza.Presentation.Wpf
                     services.AddSingleton<MainViewModel>(sp =>
                         new MainViewModel(
                             sp.GetRequiredService<INavigationCoordinator>(),
-                            sp.GetRequiredService<IAuthService>(),
+                            sp.GetRequiredService<IAuthService>(),
+
                             sp.GetRequiredService<ITenantAccessor>(),
                             () => sp.GetRequiredService<DashboardViewModel>(),
                             () => sp.GetRequiredService<ActivosListViewModel>(),
                             () => sp.GetRequiredService<ExistenciasListViewModel>(),
                             () => sp.GetRequiredService<CatalogosViewModel>(),
                             () => sp.GetRequiredService<AuditoriaViewModel>(),
+                            () => sp.GetRequiredService<ReportesViewModel>(),
+                            () => sp.GetRequiredService<ConsultaStockViewModel>(),
                             () => sp.GetRequiredService<ConfiguracionViewModel>()));
 
                     // Views
@@ -151,14 +157,14 @@ namespace Tiwintza.Presentation.Wpf
 
             await AppHost.StartAsync();
 
-            // --- Verificaci髇 de conectividad a la BD (sin migrar) ---
+            // --- Verificaci贸n de conectividad a la BD (sin migrar) ---
             try
             {
                 using var scope = AppHost.Services.CreateScope();
                 var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
                 await using var db = await factory.CreateDbContextAsync();
 
-                // Abrimos/cerramos expl韈itamente para obtener errores claros
+                // Abrimos/cerramos expl铆citamente para obtener errores claros
                 await db.Database.OpenConnectionAsync();
                 await db.Database.CloseConnectionAsync();
             }
@@ -166,9 +172,9 @@ namespace Tiwintza.Presentation.Wpf
             {
                 MessageBox.Show(
                     "No se pudo conectar a la base de datos.\n\n" +
-                    $"Archivo de configuraci髇:\n{ExternalConfigPath}\n\n" +
+                    $"Archivo de configuraci贸n:\n{ExternalConfigPath}\n\n" +
                     $"Detalle:\n{ex.Message}",
-                    "Error de conexi髇", MessageBoxButton.OK, MessageBoxImage.Error);
+                    "Error de conexi贸n", MessageBoxButton.OK, MessageBoxImage.Error);
                 Shutdown(-1);
                 return;
             }
@@ -200,7 +206,7 @@ namespace Tiwintza.Presentation.Wpf
                 var plantilla = """
                 {
                   "ConnectionStrings": {
-                    "AppDb": "Host=127.0.0.1;Port=5432;Database=batallon_tiwintza;Username=appuser;Password=CAMBIAR;Pooling=true;Timeout=30;Include Error Detail=true"
+                    "AppDb": "Host=ep-billowing-glade-a4yzmvbv.us-east-1.aws.neon.tech; Database=batallon_tiwintza; Username=neondb_owner; Password=npg_7FwovVfZXnH0; SSL Mode=VerifyFull; Channel Binding=Require;"
                   }
                 }
                 """;
@@ -209,6 +215,7 @@ namespace Tiwintza.Presentation.Wpf
         }
     }
 }
+
 
 
 

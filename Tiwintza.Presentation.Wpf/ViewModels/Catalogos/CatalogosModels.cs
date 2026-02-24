@@ -85,11 +85,50 @@ public sealed partial class ProveedorFormModel : ObservableObject
             mensaje = "Ingrese el RUC";
             return false;
         }
-        if (string.IsNullOrWhiteSpace(RazonSocial))
+
+        var rucTrim = Ruc.Trim();
+        if (rucTrim.Length != 10 && rucTrim.Length != 13)
         {
-            mensaje = "Ingrese la razon social";
+            mensaje = "El RUC/Cédula debe tener 10 o 13 dígitos";
             return false;
         }
+
+        if (!long.TryParse(rucTrim, out _))
+        {
+            mensaje = "El RUC/Cédula debe contener solo números";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(RazonSocial))
+        {
+            mensaje = "Ingrese la razón social";
+            return false;
+        }
+
+        if (RazonSocial.Length > 100)
+        {
+            mensaje = "La Razón Social excede los 100 caracteres";
+            return false;
+        }
+
+        if (Contacto?.Length > 100)
+        {
+            mensaje = "El Contacto excede los 100 caracteres";
+            return false;
+        }
+
+        if (Telefono?.Length > 15) // DB likely 15 or 20
+        {
+            mensaje = "El Teléfono excede los 15 caracteres";
+            return false;
+        }
+
+        if (Email?.Length > 100)
+        {
+            mensaje = "El Email excede los 100 caracteres";
+            return false;
+        }
+
         mensaje = null;
         return true;
     }

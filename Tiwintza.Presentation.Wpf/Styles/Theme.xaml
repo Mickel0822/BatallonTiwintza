@@ -18,6 +18,7 @@
     <conv:EstadoToBrushConverter x:Key="EstadoToBrush"/>
     <conv:DateOnlyToStringConverter x:Key="DateOnlyToString" Format="dd/MM/yyyy"/>
     <conv:ZeroToNullLongConverter x:Key="ZeroToNullLong"/>
+    <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     
 
 

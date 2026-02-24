@@ -6,6 +6,9 @@
              mc:Ignorable="d"
              d:DesignHeight="600"
              d:DesignWidth="900">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
     <Grid Margin="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -13,8 +16,11 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Traslado de activo"
-                   Style="{StaticResource H1}"/>
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Activos / Traslado" Style="{StaticResource Caption}" Foreground="{DynamicResource MutedBrush}"/>
+            <TextBlock Text="Traslado de Activo" Style="{StaticResource H1}"/>
+            <TextBlock Text="Registre un movimiento físico de activos entre áreas." Style="{StaticResource Caption}"/>
+        </StackPanel>
 
         <Border Grid.Row="1"
                 Style="{StaticResource Card}"
@@ -60,12 +66,24 @@
                     HorizontalAlignment="Right"
                     >
             <Button Style="{StaticResource GhostButton.Small}"
-                    Command="{Binding VolverCommand}"
-                    Content="Volver" Margin="0,0,8,0"/>
+                    Command="{Binding CancelarCommand}"
+                    Content="Cancelar" Margin="0,0,8,0"/>
             <Button Style="{StaticResource PrimaryButton}"
                     Command="{Binding TrasladarCommand}"
                     IsEnabled="{Binding PuedeTrasladar}"
                     Content="Trasladar"/>
         </StackPanel>
+
+        <!-- Loading Overlay -->
+        <Border Grid.RowSpan="99" Background="#80FFFFFF" 
+                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" 
+                Panel.ZIndex="100">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="20"/>
+                <TextBlock Text="Procesando..." Margin="0,8,0,0" 
+                           HorizontalAlignment="Center" 
+                           Foreground="{StaticResource MutedBrush}"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </UserControl>

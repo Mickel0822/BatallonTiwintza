@@ -1,0 +1,134 @@
+<UserControl x:Class="Tiwintza.Presentation.Wpf.Views.Reportes.ReportesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="700" d:DesignWidth="1000">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        
+        <Style x:Key="PrintableDataGrid" TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="GridLinesVisibility" Value="All"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="Black"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="Black"/>
+            <Setter Property="VerticalGridLinesBrush" Value="Black"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="AlternatingRowBackground" Value="White"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,24">
+            <TextBlock Text="Reportes / Toma Física" Style="{StaticResource Caption}" Foreground="{StaticResource MutedBrush}"/>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Generación de Reportes" Style="{StaticResource H1}"/>
+                <iconPacks:PackIconMaterial Kind="Printer" Width="24" Height="24" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}"/>
+            </StackPanel>
+            <TextBlock Text="Imprima listados para la verificación física del inventario" Style="{StaticResource Caption}"/>
+        </StackPanel>
+
+        <!-- Tabs -->
+        <TabControl Grid.Row="1">
+            <!-- ACTIVOS -->
+            <TabItem Header="Activos Fijos">
+                <Grid Margin="0,16,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <DockPanel Grid.Row="0" Margin="0,0,0,16">
+                         <Button DockPanel.Dock="Right" Click="BtnImprimirActivos_Click" Style="{StaticResource PrimaryButton}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="Printer" Width="16" Height="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="Imprimir Lista"/>
+                            </StackPanel>
+                        </Button>
+                        <TextBlock Text="Listado para toma física - Activos" VerticalAlignment="Center" FontWeight="Bold"/>
+                    </DockPanel>
+
+                    <DataGrid x:Name="GridActivos" Grid.Row="1"
+                              ItemsSource="{Binding Activos}"
+                              Style="{StaticResource PrintableDataGrid}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="120"/>
+                            <DataGridTextColumn Header="Descripción" Binding="{Binding Nombre}" Width="300"/>
+                            <DataGridTextColumn Header="Ubicación/Área" Binding="{Binding Area}" Width="200"/>
+                            <DataGridTextColumn Header="Estado Sistema" Binding="{Binding EstadoUi}" Width="120"/>
+                            <!-- Columna Checkbox vacía para impresión -->
+                            <DataGridTemplateColumn Header="Verificación Física (✓)" Width="150">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="#DDD" BorderThickness="1" Width="24" Height="24" Margin="0,2"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <!-- EXISTENCIAS -->
+            <TabItem Header="Existencias / Suministros">
+                 <Grid Margin="0,16,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <DockPanel Grid.Row="0" Margin="0,0,0,16">
+                         <Button DockPanel.Dock="Right" Click="BtnImprimirExistencias_Click" Style="{StaticResource PrimaryButton}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="Printer" Width="16" Height="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="Imprimir Lista"/>
+                            </StackPanel>
+                        </Button>
+                        <TextBlock Text="Listado para toma física - Suministros" VerticalAlignment="Center" FontWeight="Bold"/>
+                    </DockPanel>
+
+                    <DataGrid x:Name="GridExistencias" Grid.Row="1"
+                              ItemsSource="{Binding Existencias}"
+                              Style="{StaticResource PrintableDataGrid}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="120"/>
+                            <DataGridTextColumn Header="Producto" Binding="{Binding Nombre}" Width="300"/>
+                            <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}" Width="100"/>
+                             <DataGridTextColumn Header="Stock Sistema" Binding="{Binding StockActual}" Width="100"/>
+                            <!-- Columna Checkbox vacía para impresión -->
+                            <DataGridTemplateColumn Header="Conteo Físico" Width="150">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="Black" BorderThickness="0,0,0,1" Height="24" Margin="0,2"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- Loading -->
+        <Border Grid.RowSpan="2" Background="#80FFFFFF" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="20"/>
+                <TextBlock Text="Cargando..." Margin="0,8,0,0" HorizontalAlignment="Center" Foreground="{StaticResource MutedBrush}"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -22,7 +22,7 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock Text="Existencias / Registrar salida" Style="{StaticResource Caption}" Foreground="{DynamicResource SecondaryBrush}"/>
+            <TextBlock Text="Existencias / Registrar salida" Style="{StaticResource Caption}" Foreground="{DynamicResource MutedBrush}"/>
             <TextBlock Text="Registrar Salida" Style="{StaticResource H1}"/>
             <TextBlock Text="Registre una salida o consumo de inventario" Style="{StaticResource Caption}"/>
         </StackPanel>
@@ -55,7 +55,7 @@
                                   SelectedItem="{Binding ProductoSeleccionado, Mode=TwoWay}"
                                   DisplayMemberPath="Display"
                                   Style="{StaticResource InputComboBox}"/>
-                        <TextBlock Text="{Binding StockDisponible, StringFormat=Stock disponible: {0}}" Style="{StaticResource Caption}" Foreground="{DynamicResource SecondaryBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding StockDisponible, StringFormat=Stock disponible: {0}}" Style="{StaticResource Caption}" Foreground="{DynamicResource MutedBrush}" Margin="0,4,0,0"/>
                     </StackPanel>
 
                     <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical" Margin="0,12,16,0">
@@ -91,8 +91,7 @@
         </StackPanel>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Style="{StaticResource GhostButton.Small}" Command="{Binding VolverCommand}" Content="Volver"/>
-            <Button Style="{StaticResource GhostButton.Small}" Command="{Binding CancelarCommand}" Content="Cancelar" Margin="12,0,0,0"/>
+            <Button Style="{StaticResource GhostButton.Small}" Command="{Binding CancelarCommand}" Content="Cancelar"/>
             <Button Style="{StaticResource PrimaryButton}" Command="{Binding GuardarCommand}" IsEnabled="{Binding PuedeGuardar}" Margin="12,0,0,0">
                 <StackPanel Orientation="Horizontal">
                     <iconPacks:PackIconMaterial Kind="ContentSave" Width="16" Height="16" Margin="0,0,6,0"/>
@@ -100,6 +99,17 @@
                 </StackPanel>
             </Button>
         </StackPanel>
+
+        <!-- Loading Overlay -->
+        <Border Grid.RowSpan="99" Background="#80FFFFFF" 
+                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" 
+                Panel.ZIndex="100">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="20"/>
+                <TextBlock Text="Guardando..." Margin="0,8,0,0" 
+                           HorizontalAlignment="Center" 
+                           Foreground="{StaticResource MutedBrush}"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </UserControl>
-

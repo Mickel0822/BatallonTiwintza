@@ -10,9 +10,11 @@ using Tiwintza.Infrastructure.Services;
 using ClosedXML.Excel;
 using Microsoft.Win32;
 
+using Tiwintza.Presentation.Wpf.Services.Navigation;
+
 namespace Tiwintza.Presentation.Wpf.ViewModels.Existencias;
 
-public sealed partial class ExistenciasListViewModel : ObservableObject
+public sealed partial class ExistenciasListViewModel : ObservableObject, INavigationAware
 {
     private readonly IExistenciasService _service;
     private readonly IExistenciasCrudService _crudService;
@@ -310,6 +312,14 @@ public sealed partial class ExistenciasListViewModel : ObservableObject
     }
     
     public bool HasPrev => HasPrevious;
+
+    public void OnNavigatedTo() { }
+
+    public void OnNavigatedFrom()
+    {
+        CerrarFormulario();
+        IsNotifyOpen = false;
+    }
 }
 
 public record NivelOption(ExistenciaNivelEstado? Valor, string Texto);

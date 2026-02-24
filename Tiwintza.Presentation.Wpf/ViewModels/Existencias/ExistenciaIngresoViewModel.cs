@@ -56,7 +56,9 @@ public sealed partial class ExistenciaIngresoViewModel : ObservableValidator
     [Required(ErrorMessage = "Seleccione un proveedor")]
     private long? proveedorId;
 
-    [ObservableProperty] private string? numeroFactura;
+    [ObservableProperty, NotifyDataErrorInfo]
+    [Required(ErrorMessage = "El numero de factura es obligatorio")]
+    private string? numeroFactura;
 
     [ObservableProperty, NotifyDataErrorInfo]
     [Required(ErrorMessage = "Seleccione una fecha")]
@@ -80,28 +82,32 @@ public sealed partial class ExistenciaIngresoViewModel : ObservableValidator
     [ObservableProperty] private string? productoQuickAddError;
     [ObservableProperty] private string? nuevoProductoCodigo;
     [ObservableProperty] private string? nuevoProductoNombre;
-    [ObservableProperty] private string? nuevoProductoUnidad;
+    [ObservableProperty] private int? nuevoProductoUnidad;
     [ObservableProperty] private string? nuevoProductoDescripcion;
     [ObservableProperty] private int? nuevoProductoNivelMaximo;
     [ObservableProperty] private int? nuevoProductoNivelSeguridad;
     [ObservableProperty] private int? nuevoProductoNivelMinimo;
     [ObservableProperty] private int? nuevoProductoNivelCritico;
 
+
     public decimal Subtotal => Detalles.Sum(d => d.Total);
     public decimal Total => Subtotal;
 
-    public bool PuedeGuardar => !IsBusy && !HasErrors && ProveedorId is not null && Detalles.Count > 0;
+    public bool PuedeGuardar => !IsBusy && !HasErrors && ProveedorId is not null && Detalles.Count > 0 && !string.IsNullOrWhiteSpace(NumeroFactura);
     public bool PuedeGuardarProveedor => !IsProveedorQuickAddBusy
                                          && !string.IsNullOrWhiteSpace(NuevoProveedorRuc)
                                          && !string.IsNullOrWhiteSpace(NuevoProveedorRazonSocial);
     public bool PuedeGuardarProducto => !IsProductoQuickAddBusy
                                         && !string.IsNullOrWhiteSpace(NuevoProductoCodigo)
                                         && !string.IsNullOrWhiteSpace(NuevoProductoNombre)
-                                        && !string.IsNullOrWhiteSpace(NuevoProductoUnidad)
+                                        && NuevoProductoUnidad is not null && NuevoProductoUnidad > 0
                                         && NuevoProductoNivelMaximo is not null
                                         && NuevoProductoNivelSeguridad is not null
                                         && NuevoProductoNivelMinimo is not null
                                         && NuevoProductoNivelCritico is not null;
+
+    // Habilita botón Nuevo Producto solo si no hay producto seleccionado
+    public bool PuedeAgregarNuevoProducto => ProductoSeleccionado is null;
 
     public event Action<long>? Guardado;
     public event Action? Cancelado;
@@ -157,9 +163,9 @@ public sealed partial class ExistenciaIngresoViewModel : ObservableValidator
             return;
         }
 
-        if (costo < 0)
+        if (costo <= 0)
         {
-            ErrorMessage = "El costo unitario no puede ser negativo";
+            ErrorMessage = "El costo unitario debe ser mayor a cero";
             return;
         }
 
@@ -211,6 +217,18 @@ public sealed partial class ExistenciaIngresoViewModel : ObservableValidator
     private void Volver()
     {
         VolverSolicitado?.Invoke();
+    }
+
+    [RelayCommand]
+    private void LimpiarProveedor()
+    {
+        ProveedorId = null;
+    }
+
+    [RelayCommand]
+    private void LimpiarProducto()
+    {
+        ProductoSeleccionado = null;
     }
 
     [RelayCommand]
@@ -288,9 +306,17 @@ public sealed partial class ExistenciaIngresoViewModel : ObservableValidator
         try
         {
             IsProveedorQuickAddBusy = true;
+            var ruc = NuevoProveedorRuc?.Trim();
+            if (string.IsNullOrWhiteSpace(ruc) || (ruc.Length != 10 && ruc.Length != 13) || !long.TryParse(ruc, out _))
+            {
+                ProveedorQuickAddError = "El RUC/Cedula debe tener 10 o 13 digitos numericos";
+                IsProveedorQuickAddBusy = false;
+                return;
+            }
+
             var dto = new ProveedorCreateDto
             {
-                Ruc = NuevoProveedorRuc!.Trim(),
+                Ruc = ruc,
                 RazonSocial = NuevoProveedorRazonSocial!.Trim(),
                 Contacto = string.IsNullOrWhiteSpace(NuevoProveedorContacto) ? null : NuevoProveedorContacto.Trim(),
                 Telefono = string.IsNullOrWhiteSpace(NuevoProveedorTelefono) ? null : NuevoProveedorTelefono.Trim(),
@@ -347,7 +373,7 @@ public sealed partial class ExistenciaIngresoViewModel : ObservableValidator
             {
                 Codigo = NuevoProductoCodigo!.Trim(),
                 Nombre = NuevoProductoNombre!.Trim(),
-                Unidad = NuevoProductoUnidad!.Trim(),
+                Unidad = NuevoProductoUnidad!.Value.ToString(),
                 Descripcion = string.IsNullOrWhiteSpace(NuevoProductoDescripcion) ? null : NuevoProductoDescripcion.Trim(),
                 NivelMaximo = NuevoProductoNivelMaximo!.Value,
                 NivelSeguridad = NuevoProductoNivelSeguridad!.Value,
@@ -442,6 +468,9 @@ public sealed partial class ExistenciaIngresoViewModel : ObservableValidator
 
     partial void OnProductoSeleccionadoChanged(ExistenciaComboItemDto? value)
     {
+        // Notificar cambio para habilitar/deshabilitar botón Nuevo
+        OnPropertyChanged(nameof(PuedeAgregarNuevoProducto));
+        
         if (value is null)
         {
             return;
@@ -459,7 +488,7 @@ public sealed partial class ExistenciaIngresoViewModel : ObservableValidator
     partial void OnIsProductoQuickAddBusyChanged(bool value) => OnPropertyChanged(nameof(PuedeGuardarProducto));
     partial void OnNuevoProductoCodigoChanged(string? value) => OnPropertyChanged(nameof(PuedeGuardarProducto));
     partial void OnNuevoProductoNombreChanged(string? value) => OnPropertyChanged(nameof(PuedeGuardarProducto));
-    partial void OnNuevoProductoUnidadChanged(string? value) => OnPropertyChanged(nameof(PuedeGuardarProducto));
+    partial void OnNuevoProductoUnidadChanged(int? value) => OnPropertyChanged(nameof(PuedeGuardarProducto));
     partial void OnNuevoProductoNivelMaximoChanged(int? value) => OnPropertyChanged(nameof(PuedeGuardarProducto));
     partial void OnNuevoProductoNivelSeguridadChanged(int? value) => OnPropertyChanged(nameof(PuedeGuardarProducto));
     partial void OnNuevoProductoNivelMinimoChanged(int? value) => OnPropertyChanged(nameof(PuedeGuardarProducto));

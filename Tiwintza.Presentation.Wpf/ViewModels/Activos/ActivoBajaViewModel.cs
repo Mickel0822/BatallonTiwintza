@@ -19,6 +19,7 @@ public sealed partial class ActivoBajaViewModel : ObservableObject
     [ObservableProperty] private DateTime? fechaBaja;
     [ObservableProperty] private string responsable = string.Empty;
     [ObservableProperty] private string? observaciones;
+    [ObservableProperty] private bool isBusy;
 
     public bool PuedeDarBaja =>
         !string.IsNullOrWhiteSpace(CodigoInformeTecnico)
@@ -55,17 +56,28 @@ public sealed partial class ActivoBajaViewModel : ObservableObject
     private void Volver() => VolverSolicitado?.Invoke();
 
     [RelayCommand]
+    private void Cancelar() => VolverSolicitado?.Invoke();
+
+    [RelayCommand]
     private async Task DarBajaAsync()
     {
         if (!PuedeDarBaja) return;
 
-        await _crud.DarBajaAsync(
-            ActivoId,
-            CodigoInformeTecnico,
-            DateOnly.FromDateTime(FechaBaja!.Value.Date),
-            Responsable,
-            Observaciones);
+        IsBusy = true;
+        try
+        {
+            await _crud.DarBajaAsync(
+                ActivoId,
+                CodigoInformeTecnico,
+                DateOnly.FromDateTime(FechaBaja!.Value.Date),
+                Responsable,
+                Observaciones);
 
-        DarBajaSolicitado?.Invoke();
+            DarBajaSolicitado?.Invoke();
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 }

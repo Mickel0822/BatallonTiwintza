@@ -75,14 +75,14 @@ public sealed partial class CatalogosViewModel : ObservableObject
 
         try
         {
-            var dto = await _service.CrearAreaAsync(NuevoAreaNombre.Trim());
-            Areas.Add(new CatalogItemModel(dto.Id, dto.Nombre));
+            await _service.CrearAreaAsync(NuevoAreaNombre.Trim());
             NuevoAreaNombre = null;
+            await CargarAsync();
             MostrarNotificacion("Area creada", "El area se registro correctamente.");
         }
         catch (Exception ex)
         {
-            MostrarNotificacion("Error", ex.Message, true);
+            MostrarNotificacion("Error", GetDetailedError(ex), true);
         }
     }
 
@@ -100,16 +100,15 @@ public sealed partial class CatalogosViewModel : ObservableObject
         if (AreaEdicion is null) return;
         try
         {
-            var dto = await _service.ActualizarAreaAsync(AreaEdicion.Id, AreaEdicion.Nombre.Trim());
-            var original = Areas.First(a => a.Id == dto.Id);
-            original.Nombre = dto.Nombre;
+            await _service.ActualizarAreaAsync(AreaEdicion.Id, AreaEdicion.Nombre.Trim());
             IsAreaDialogOpen = false;
             AreaEdicion = null;
+            await CargarAsync();
             MostrarNotificacion("Area actualizada", "Los cambios fueron guardados.");
         }
         catch (Exception ex)
         {
-            MostrarNotificacion("Error", ex.Message, true);
+            MostrarNotificacion("Error", GetDetailedError(ex), true);
         }
     }
 
@@ -129,12 +128,12 @@ public sealed partial class CatalogosViewModel : ObservableObject
         try
         {
             await _service.EliminarAreaAsync(item.Id);
-            Areas.Remove(item);
+            await CargarAsync();
             MostrarNotificacion("Area eliminada", "El registro fue eliminado.");
         }
         catch (Exception ex)
         {
-            MostrarNotificacion("Error", ex.Message, true);
+            MostrarNotificacion("Error", GetDetailedError(ex), true);
         }
     }
 
@@ -149,14 +148,14 @@ public sealed partial class CatalogosViewModel : ObservableObject
 
         try
         {
-            var dto = await _service.CrearTipoAsync(NuevoTipoNombre.Trim());
-            Tipos.Add(new CatalogItemModel(dto.Id, dto.Nombre));
+            await _service.CrearTipoAsync(NuevoTipoNombre.Trim());
             NuevoTipoNombre = null;
+            await CargarAsync();
             MostrarNotificacion("Tipo creado", "El tipo se registro correctamente.");
         }
         catch (Exception ex)
         {
-            MostrarNotificacion("Error", ex.Message, true);
+            MostrarNotificacion("Error", GetDetailedError(ex), true);
         }
     }
 
@@ -174,16 +173,15 @@ public sealed partial class CatalogosViewModel : ObservableObject
         if (TipoEdicion is null) return;
         try
         {
-            var dto = await _service.ActualizarTipoAsync(TipoEdicion.Id, TipoEdicion.Nombre.Trim());
-            var original = Tipos.First(t => t.Id == dto.Id);
-            original.Nombre = dto.Nombre;
+            await _service.ActualizarTipoAsync(TipoEdicion.Id, TipoEdicion.Nombre.Trim());
             IsTipoDialogOpen = false;
             TipoEdicion = null;
+            await CargarAsync();
             MostrarNotificacion("Tipo actualizado", "Los cambios fueron guardados.");
         }
         catch (Exception ex)
         {
-            MostrarNotificacion("Error", ex.Message, true);
+            MostrarNotificacion("Error", GetDetailedError(ex), true);
         }
     }
 
@@ -203,12 +201,12 @@ public sealed partial class CatalogosViewModel : ObservableObject
         try
         {
             await _service.EliminarTipoAsync(item.Id);
-            Tipos.Remove(item);
+            await CargarAsync();
             MostrarNotificacion("Tipo eliminado", "El registro fue eliminado.");
         }
         catch (Exception ex)
         {
-            MostrarNotificacion("Error", ex.Message, true);
+            MostrarNotificacion("Error", GetDetailedError(ex), true);
         }
     }
 
@@ -223,14 +221,14 @@ public sealed partial class CatalogosViewModel : ObservableObject
 
         try
         {
-            var dto = await _service.CrearProveedorAsync(NuevoProveedor.ToDto());
-            Proveedores.Add(new ProveedorModel(dto));
+            await _service.CrearProveedorAsync(NuevoProveedor.ToDto());
             NuevoProveedor = new ProveedorFormModel();
+            await CargarAsync();
             MostrarNotificacion("Proveedor creado", "El proveedor se registro correctamente.");
         }
         catch (Exception ex)
         {
-            MostrarNotificacion("Error", ex.Message, true);
+            MostrarNotificacion("Error", GetDetailedError(ex), true);
         }
     }
 
@@ -254,16 +252,15 @@ public sealed partial class CatalogosViewModel : ObservableObject
 
         try
         {
-            var dto = await _service.ActualizarProveedorAsync(ProveedorEdicion.Id.Value, ProveedorEdicion.ToDto());
-            var original = Proveedores.First(p => p.Id == dto.Id);
-            original.Actualizar(dto);
+            await _service.ActualizarProveedorAsync(ProveedorEdicion.Id.Value, ProveedorEdicion.ToDto());
             IsProveedorDialogOpen = false;
             ProveedorEdicion = null;
+            await CargarAsync();
             MostrarNotificacion("Proveedor actualizado", "Los cambios fueron guardados.");
         }
         catch (Exception ex)
         {
-            MostrarNotificacion("Error", ex.Message, true);
+            MostrarNotificacion("Error", GetDetailedError(ex), true);
         }
     }
 
@@ -283,12 +280,12 @@ public sealed partial class CatalogosViewModel : ObservableObject
         try
         {
             await _service.EliminarProveedorAsync(proveedor.Id);
-            Proveedores.Remove(proveedor);
+            await CargarAsync();
             MostrarNotificacion("Proveedor eliminado", "El registro fue eliminado.");
         }
         catch (Exception ex)
         {
-            MostrarNotificacion("Error", ex.Message, true);
+            MostrarNotificacion("Error", GetDetailedError(ex), true);
         }
     }
 
@@ -328,6 +325,18 @@ public sealed partial class CatalogosViewModel : ObservableObject
         {
             IsBusy = false;
         }
+    }
+
+    private string GetDetailedError(Exception ex)
+    {
+        var msg = ex.Message;
+        var inner = ex.InnerException;
+        while (inner != null)
+        {
+            msg += $"\n{inner.Message}";
+            inner = inner.InnerException;
+        }
+        return msg;
     }
 
     private void MostrarNotificacion(string titulo, string mensaje, bool esError = false)

@@ -224,8 +224,8 @@
                         <iconPacks:PackIconMaterial Kind="PackageVariantClosed" Width="24" Height="24"/>
                     </Border>
                     <StackPanel Margin="12,0,0,0">
-                        <TextBlock Text="Registrar ingreso" Style="{StaticResource H4}"/>
-                        <TextBlock Text="Registrar ingreso de existencias" Style="{StaticResource Caption}"/>
+                        <TextBlock Text="Registrar Existencia" Style="{StaticResource H4}"/>
+                        <TextBlock Text="Gestione el inventario de suministros" Style="{StaticResource Caption}"/>
                     </StackPanel>
                 </StackPanel>
             </Button>
